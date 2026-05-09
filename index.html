@@ -142,6 +142,12 @@
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
+  #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
+  .auth-box { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 2.5rem 2rem; width: 100%; max-width: 340px; }
+  .auth-logo { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--purple); letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+  .auth-sub { font-size: 12px; color: var(--hint); margin-bottom: 1.75rem; }
+  .auth-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 16px; }
+
   @media (max-width: 700px) {
     .layout { grid-template-columns: 1fr; }
     .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 1rem; }
@@ -158,7 +164,19 @@
 
 <div class="toast" id="toast"></div>
 
-<div class="layout">
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">BJJ/BULK TRACKER</div>
+    <div class="auth-sub">Enter password to continue</div>
+    <div class="form-group">
+      <input type="password" id="auth-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkAuth()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="checkAuth()">Unlock</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<div class="layout" id="app" style="display:none;">
   <nav class="sidebar">
     <div class="sidebar-logo">BJJ/BULK<span>TRACKER v1</span></div>
     <div class="sidebar-section">Overview</div>
@@ -642,6 +660,23 @@ async function clearAll() {
   renderDashboard();
 }
 
+async function checkAuth() {
+  const input = document.getElementById('auth-input').value;
+  const errEl = document.getElementById('auth-error');
+  if (!input) { errEl.textContent = 'Enter a password'; return; }
+  const { data, error } = await sb.from('config').select('value').eq('key','password').single();
+  if (error || !data) { errEl.textContent = 'Could not verify — check connection'; return; }
+  if (input === data.value) {
+    sessionStorage.setItem('auth', 'ok');
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+    init();
+  } else {
+    errEl.textContent = 'Incorrect password';
+    document.getElementById('auth-input').value = '';
+  }
+}
+
 function init() {
   document.getElementById('lift-date').value = today();
   document.getElementById('bjj-date').value = today();
@@ -652,7 +687,11 @@ function init() {
   renderDashboard();
 }
 
-init();
+if (sessionStorage.getItem('auth') === 'ok') {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  init();
+}
 </script>
 </body>
 </html>
