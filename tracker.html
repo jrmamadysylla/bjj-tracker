@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BJJ & Bulk Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --muted: #888;
+    --hint: #555;
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --teal: #34d399;
+    --teal-dim: rgba(52,211,153,0.12);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.10);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.10);
+    --red: #f87171;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
+  .sidebar-logo { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--purple); letter-spacing: 0.05em; padding: 0 0.5rem 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+  .sidebar-logo span { color: var(--muted); display: block; font-size: 10px; margin-top: 2px; letter-spacing: 0.08em; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--text); background: var(--purple-dim); }
+  .nav-item.active .nav-icon { color: var(--purple); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-section { font-size: 10px; color: var(--hint); letter-spacing: 0.1em; text-transform: uppercase; padding: 1rem 0.5rem 0.4rem; }
+
+  .main { padding: 2rem 2.5rem; max-width: 860px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title { font-size: 20px; font-weight: 500; margin-bottom: 1.5rem; color: var(--text); }
+  .page-title span { color: var(--muted); font-weight: 300; font-size: 14px; margin-left: 8px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem; }
+
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .wk-day { background: var(--surface2); border-radius: var(--radius-sm); padding: 8px 4px; text-align: center; }
+  .wk-day.today { border: 1px solid var(--purple); }
+  .wk-label { font-size: 10px; color: var(--hint); margin-bottom: 6px; }
+  .wk-dots { display: flex; justify-content: center; gap: 3px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border2); }
+  .dot.lift { background: var(--purple); border-color: var(--purple); }
+  .dot.bjj { background: var(--teal); border-color: var(--teal); }
+
+  .pr-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .pr-row:last-child { border-bottom: none; }
+  .pr-name { font-size: 13px; color: var(--text); min-width: 180px; }
+  .pr-bar-wrap { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .pr-bar { height: 4px; background: var(--purple); border-radius: 2px; }
+  .pr-val { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--purple); min-width: 55px; text-align: right; }
+
+  .weight-chart { display: flex; align-items: flex-end; gap: 6px; height: 90px; }
+  .wbar-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .wbar { width: 100%; border-radius: 3px 3px 0 0; background: var(--teal); min-height: 3px; opacity: 0.8; }
+  .wbar-val { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 3px; }
+  .wbar-lbl { font-size: 9px; color: var(--hint); margin-top: 3px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; display: block; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 8px 12px; width: 100%; outline: none; transition: border 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--purple); }
+  select option { background: var(--surface2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .ex-block { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; }
+  .ex-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .ex-target { font-size: 11px; color: var(--hint); font-weight: 400; }
+  .set-header { display: grid; grid-template-columns: 36px 1fr 1fr 1fr; gap: 6px; font-size: 10px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+  .set-row { display: grid; grid-template-columns: 36px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px; align-items: center; }
+  .set-num { font-size: 11px; color: var(--hint); text-align: center; padding-top: 6px; }
+  .set-row input { padding: 6px 8px; }
+  .set-notes { grid-column: 2 / 5; }
+
+  .btn { padding: 9px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { background: var(--surface2); color: var(--text); }
+  .btn-primary { background: var(--purple); color: #0e0e0e; border-color: var(--purple); font-weight: 500; }
+  .btn-primary:hover { opacity: 0.88; background: var(--purple); }
+  .btn-danger { color: var(--red); border-color: rgba(248,113,113,0.3); }
+  .btn-danger:hover { background: rgba(248,113,113,0.08); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 1rem; }
+
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; display: inline-block; }
+  .badge-lift { background: var(--purple-dim); color: var(--purple); }
+  .badge-bjj { background: var(--teal-dim); color: var(--teal); }
+  .badge-meal { background: var(--amber-dim); color: var(--amber); }
+  .badge-weight { background: var(--blue-dim); color: var(--blue); }
+  .badge-gut-good { background: var(--teal-dim); color: var(--teal); }
+  .badge-gut-mild { background: var(--amber-dim); color: var(--amber); }
+  .badge-gut-bad { background: rgba(248,113,113,0.1); color: var(--red); }
+
+  .log-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .log-row:last-child { border-bottom: none; }
+  .log-date { color: var(--hint); font-family: 'DM Mono', monospace; font-size: 11px; padding-top: 2px; }
+  .log-detail { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+  .meal-slot { display: grid; grid-template-columns: 150px 1fr 100px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .meal-slot-label { font-size: 12px; color: var(--muted); }
+
+  .empty { text-align: center; padding: 2.5rem; color: var(--hint); font-size: 13px; }
+
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--border2); color: var(--text); padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 100; font-family: 'DM Sans', sans-serif; }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: rgba(248,113,113,0.4); color: var(--red); }
+
+  .loading { color: var(--hint); font-size: 13px; padding: 1rem 0; }
+  .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+  .legend { display: flex; gap: 16px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 1rem; }
+    .sidebar-logo { display: none; }
+    .main { padding: 1rem; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    .meal-slot { grid-template-columns: 1fr; }
+    .week-grid { grid-template-columns: repeat(7,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-logo">BJJ/BULK<span>TRACKER v1</span></div>
+    <div class="sidebar-section">Overview</div>
+    <button class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">◈</span> Dashboard</button>
+    <div class="sidebar-section">Log</div>
+    <button class="nav-item" onclick="nav('lift',this)"><span class="nav-icon">↑</span> Lift session</button>
+    <button class="nav-item" onclick="nav('bjj',this)"><span class="nav-icon">◎</span> BJJ session</button>
+    <button class="nav-item" onclick="nav('meal',this)"><span class="nav-icon">◇</span> Meals & gut</button>
+    <button class="nav-item" onclick="nav('weight',this)"><span class="nav-icon">▷</span> Bodyweight</button>
+    <div class="sidebar-section">Review</div>
+    <button class="nav-item" onclick="nav('history',this)"><span class="nav-icon">≡</span> History</button>
+  </nav>
+
+  <main class="main">
+
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard <span id="dash-date"></span></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-val" id="s-lifts">—</div><div class="stat-lbl">Lifts this week</div></div>
+        <div class="stat"><div class="stat-val" id="s-bjj">—</div><div class="stat-lbl">BJJ sessions</div></div>
+        <div class="stat"><div class="stat-val" id="s-weight">—</div><div class="stat-lbl">Weight (kg)</div></div>
+        <div class="stat"><div class="stat-val" id="s-streak">—</div><div class="stat-lbl">Day streak</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">This week</div>
+        <div class="week-grid" id="week-view"></div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> Lift</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> BJJ</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Weight trend</div>
+        <div class="weight-chart" id="weight-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Personal records</div>
+        <div id="pr-list"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <div id="page-lift" class="page">
+      <div class="page-title">Log lift session</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="lift-date"></div>
+          <div class="form-group"><label class="form-label">Session</label>
+            <select id="lift-session" onchange="renderLiftForm()">
+              <option value="Upper A">Upper A — strength</option>
+              <option value="Upper B">Upper B — volume</option>
+              <option value="Lower A">Lower A — strength</option>
+              <option value="Lower B">Lower B — volume</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Overall feeling</label>
+          <select id="lift-feel">
+            <option value="Strong">Strong</option>
+            <option value="Average">Average</option>
+            <option value="Tired">Tired</option>
+          </select>
+        </div>
+        <div id="lift-exercises"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveLift()">Save session</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-bjj" class="page">
+      <div class="page-title">Log BJJ session</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="bjj-date"></div>
+          <div class="form-group"><label class="form-label">Type</label>
+            <select id="bjj-type">
+              <option value="No-gi">No-gi</option>
+              <option value="Gi">Gi</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Duration (min)</label><input type="number" id="bjj-dur" value="60" min="1"></div>
+          <div class="form-group"><label class="form-label">Energy level</label>
+            <select id="bjj-energy">
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label>
+          <input type="text" id="bjj-notes" placeholder="Worked on guard passing, drilled triangles...">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveBJJ()">Save session</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-meal" class="page">
+      <div class="page-title">Meals & gut log</div>
+      <div class="card">
+        <div class="card-title">Meals</div>
+        <div class="form-group"><label class="form-label">Date</label><input type="date" id="meal-date" style="max-width:200px;"></div>
+        <div id="meal-slots"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveMeals()">Save meals</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Gut log</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Gut feel today</label>
+            <select id="gut-feel">
+              <option value="Good">Good — no issues</option>
+              <option value="Mild">Mild — some bloating</option>
+              <option value="Bad">Bad — significant issues</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Notes</label>
+            <input type="text" id="gut-notes" placeholder="Tried garlic today, noticed bloating...">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveGut()">Save gut log</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-weight" class="page">
+      <div class="page-title">Bodyweight</div>
+      <div class="card">
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="bw-date"></div>
+          <div class="form-group"><label class="form-label">Weight (kg)</label><input type="number" id="bw-val" step="0.1" placeholder="79.5"></div>
+          <div class="form-group"><label class="form-label">Time of day</label>
+            <select id="bw-time">
+              <option value="Morning (fasted)">Morning (fasted)</option>
+              <option value="Evening">Evening</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveBW()">Save</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Weight history</div>
+        <div id="bw-history"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <div id="page-history" class="page">
+      <div class="page-title">History</div>
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          All logs
+          <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete ALL data? This cannot be undone.')) clearAll()">Clear all</button>
+        </div>
+        <div id="history-list"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jimlyjqhccplbsjbveff.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Vlaf075-sPY0nMc2J5x73w_uLEI-JeB';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const PROGRAMMES = {
+  'Upper A': [
+    {name:'Barbell bench press', sets:4, target:'5–6 reps'},
+    {name:'Weighted pull-ups', sets:4, target:'5–6 reps'},
+    {name:'Overhead press', sets:3, target:'6–8 reps'},
+    {name:'Barbell row', sets:3, target:'6–8 reps'},
+    {name:'Face pulls', sets:3, target:'15 reps'},
+    {name:'Hammer curls', sets:2, target:'12 reps'},
+  ],
+  'Upper B': [
+    {name:'Incline DB press', sets:4, target:'8–10 reps'},
+    {name:'Cable row', sets:4, target:'10–12 reps'},
+    {name:'DB shoulder press', sets:3, target:'10–12 reps'},
+    {name:'Lat pulldown', sets:3, target:'10–12 reps'},
+    {name:'Lateral raises', sets:3, target:'15 reps'},
+    {name:'Tricep pushdowns', sets:2, target:'15 reps'},
+  ],
+  'Lower A': [
+    {name:'Squat', sets:4, target:'5–6 reps'},
+    {name:'Romanian deadlift', sets:3, target:'8 reps'},
+    {name:'Leg press', sets:3, target:'10 reps'},
+    {name:'Leg curl', sets:3, target:'10 reps'},
+    {name:'Calf raises', sets:3, target:'15 reps'},
+    {name:'Hanging knee raises', sets:3, target:'10–12 reps'},
+  ],
+  'Lower B': [
+    {name:'Deadlift', sets:3, target:'5 reps'},
+    {name:'Bulgarian split squat', sets:3, target:'10/side'},
+    {name:'Leg press', sets:3, target:'12 reps'},
+    {name:'Leg curl', sets:3, target:'12 reps'},
+    {name:'Calf raises', sets:3, target:'20 reps'},
+    {name:'Plank hold', sets:3, target:'30–45 sec'},
+  ],
+};
+
+const MEAL_SLOTS = ['Breakfast','Pre-training snack','Lunch','Post-training','Dinner','Evening snack'];
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2000);
+}
+
+function nav(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'history') renderHistory();
+  if (page === 'weight') renderBWHistory();
+}
+
+function renderLiftForm() {
+  const session = document.getElementById('lift-session').value;
+  const exs = PROGRAMMES[session] || [];
+  const wrap = document.getElementById('lift-exercises');
+  wrap.innerHTML = exs.map((ex, ei) => `
+    <div class="ex-block">
+      <div class="ex-name">${ex.name} <span class="ex-target">${ex.sets} sets · ${ex.target}</span></div>
+      <div class="set-header"><span></span><span>Weight (kg)</span><span>Reps</span><span>Notes</span></div>
+      ${Array.from({length: ex.sets}, (_,s) => `
+        <div class="set-row">
+          <span class="set-num">${s+1}</span>
+          <input type="number" step="0.5" placeholder="kg" id="e${ei}s${s}kg">
+          <input type="number" placeholder="reps" id="e${ei}s${s}reps">
+          <input type="text" placeholder="optional" id="e${ei}s${s}note" class="set-notes">
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function saveLift() {
+  const session = document.getElementById('lift-session').value;
+  const date = document.getElementById('lift-date').value || today();
+  const feel = document.getElementById('lift-feel').value;
+  const exs = PROGRAMMES[session];
+  const exercises = exs.map((ex, ei) => ({
+    name: ex.name,
+    sets: Array.from({length: ex.sets}, (_,s) => ({
+      kg: document.getElementById(`e${ei}s${s}kg`)?.value || '',
+      reps: document.getElementById(`e${ei}s${s}reps`)?.value || '',
+      note: document.getElementById(`e${ei}s${s}note`)?.value || '',
+    }))
+  }));
+  const { error } = await sb.from('lifts').insert({date, session, exercises});
+  if (error) { toast('Error saving lift', true); return; }
+  await updatePRs(exercises);
+  toast('Lift saved');
+  renderLiftForm();
+}
+
+async function updatePRs(exercises) {
+  const { data: existing } = await sb.from('lifts').select('exercises');
+  const prs = {};
+  (existing || []).forEach(row => {
+    (row.exercises || []).forEach(ex => {
+      (ex.sets || []).forEach(s => {
+        const kg = parseFloat(s.kg);
+        if (!isNaN(kg) && kg > 0) {
+          if (!prs[ex.name] || kg > prs[ex.name]) prs[ex.name] = kg;
+        }
+      });
+    });
+  });
+  exercises.forEach(ex => {
+    (ex.sets || []).forEach(s => {
+      const kg = parseFloat(s.kg);
+      if (!isNaN(kg) && kg > 0) {
+        if (!prs[ex.name] || kg > prs[ex.name]) prs[ex.name] = kg;
+      }
+    });
+  });
+  try { localStorage.setItem('prs', JSON.stringify(prs)); } catch(e) {}
+}
+
+async function saveBJJ() {
+  const date = document.getElementById('bjj-date').value || today();
+  const type = document.getElementById('bjj-type').value;
+  const duration_min = parseInt(document.getElementById('bjj-dur').value) || 60;
+  const energy = document.getElementById('bjj-energy').value;
+  const notes = document.getElementById('bjj-notes').value;
+  const { error } = await sb.from('bjj').insert({date, type, duration_min, energy, notes});
+  if (error) { toast('Error saving BJJ', true); return; }
+  document.getElementById('bjj-notes').value = '';
+  toast('BJJ session saved');
+}
+
+function renderMealForm() {
+  document.getElementById('meal-slots').innerHTML = MEAL_SLOTS.map((m,i) => `
+    <div class="meal-slot">
+      <span class="meal-slot-label">${m}</span>
+      <input type="text" id="meal${i}" placeholder="e.g. Chicken + rice + courgette">
+      <select id="meal${i}eaten">
+        <option value="yes">Eaten</option>
+        <option value="skip">Skipped</option>
+      </select>
+    </div>`).join('');
+}
+
+async function saveMeals() {
+  const date = document.getElementById('meal-date').value || today();
+  const meals = MEAL_SLOTS.map((m,i) => ({
+    slot: m,
+    food: document.getElementById(`meal${i}`)?.value || '',
+    eaten: document.getElementById(`meal${i}eaten`)?.value || 'yes'
+  }));
+  const { error } = await sb.from('meals').insert({date, meals});
+  if (error) { toast('Error saving meals', true); return; }
+  toast('Meals saved');
+}
+
+async function saveGut() {
+  const date = document.getElementById('meal-date').value || today();
+  const feel = document.getElementById('gut-feel').value;
+  const notes = document.getElementById('gut-notes').value;
+  const { error } = await sb.from('gut_log').insert({date, feel, notes});
+  if (error) { toast('Error saving gut log', true); return; }
+  document.getElementById('gut-notes').value = '';
+  toast('Gut log saved');
+}
+
+async function saveBW() {
+  const date = document.getElementById('bw-date').value || today();
+  const weight_kg = parseFloat(document.getElementById('bw-val').value);
+  const time_of_day = document.getElementById('bw-time').value;
+  if (isNaN(weight_kg)) { toast('Enter a valid weight', true); return; }
+  const { error } = await sb.from('bodyweight').insert({date, weight_kg, time_of_day});
+  if (error) { toast('Error saving weight', true); return; }
+  document.getElementById('bw-val').value = '';
+  toast('Weight saved');
+  renderBWHistory();
+}
+
+async function renderBWHistory() {
+  const { data } = await sb.from('bodyweight').select('*').order('date', {ascending: false}).limit(20);
+  const el = document.getElementById('bw-history');
+  if (!data || !data.length) { el.innerHTML = '<div class="empty">No entries yet</div>'; return; }
+  el.innerHTML = data.map(l =>
+    `<div class="log-row"><div class="log-date">${l.date}</div><div>${l.weight_kg.toFixed(1)} kg <span style="color:var(--hint);font-size:11px;margin-left:6px;">${l.time_of_day}</span></div></div>`
+  ).join('');
+}
+
+function getWeekDates() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const mon = new Date(new Date().setDate(diff));
+  return Array.from({length:7}, (_,i) => {
+    const nd = new Date(mon);
+    nd.setDate(mon.getDate() + i);
+    return nd.toISOString().split('T')[0];
+  });
+}
+
+async function renderDashboard() {
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+  const weekDates = getWeekDates();
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  const [{ data: lifts }, { data: bjj }, { data: bw }] = await Promise.all([
+    sb.from('lifts').select('date,session').gte('date', weekDates[0]),
+    sb.from('bjj').select('date').gte('date', weekDates[0]),
+    sb.from('bodyweight').select('weight_kg,date').order('date',{ascending:false}).limit(10),
+  ]);
+
+  const lArr = lifts || [], bArr = bjj || [], wArr = bw || [];
+  document.getElementById('s-lifts').textContent = lArr.length;
+  document.getElementById('s-bjj').textContent = bArr.length;
+  document.getElementById('s-weight').textContent = wArr.length ? wArr[0].weight_kg.toFixed(1) : '—';
+
+  const { data: allLifts } = await sb.from('lifts').select('date').order('date',{ascending:false});
+  const { data: allBJJ } = await sb.from('bjj').select('date').order('date',{ascending:false});
+  const allDates = new Set([...(allLifts||[]).map(l=>l.date), ...(allBJJ||[]).map(l=>l.date)]);
+  let streak = 0;
+  const sd = new Date();
+  while(true) {
+    const ds = sd.toISOString().split('T')[0];
+    if (allDates.has(ds)) { streak++; sd.setDate(sd.getDate()-1); } else break;
+    if (streak > 365) break;
+  }
+  document.getElementById('s-streak').textContent = streak;
+
+  const tod = today();
+  document.getElementById('week-view').innerHTML = weekDates.map((wd, i) => {
+    const hasLift = lArr.some(l => l.date === wd);
+    const hasBJJ = bArr.some(l => l.date === wd);
+    return `<div class="wk-day${wd === tod ? ' today' : ''}">
+      <div class="wk-label">${days[i]}</div>
+      <div class="wk-dots">
+        <div class="dot${hasLift ? ' lift' : ''}"></div>
+        <div class="dot${hasBJJ ? ' bjj' : ''}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const wChart = document.getElementById('weight-chart');
+  if (!wArr.length) { wChart.innerHTML = '<div class="empty" style="width:100%">No weight data yet</div>'; }
+  else {
+    const recent = [...wArr].reverse();
+    const vals = recent.map(w => w.weight_kg);
+    const mn = Math.min(...vals) - 0.5;
+    const mx = Math.max(...vals) + 0.5;
+    wChart.innerHTML = recent.map(w => {
+      const h = Math.round(((w.weight_kg - mn) / (mx - mn)) * 70 + 8);
+      return `<div class="wbar-col">
+        <div class="wbar-val">${w.weight_kg.toFixed(1)}</div>
+        <div class="wbar" style="height:${h}px"></div>
+        <div class="wbar-lbl">${w.date.slice(5)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const prs = JSON.parse(localStorage.getItem('prs') || '{}');
+  const prEl = document.getElementById('pr-list');
+  const keys = Object.keys(prs);
+  if (!keys.length) { prEl.innerHTML = '<div class="empty">Log lifts to see PRs here</div>'; return; }
+  const maxPR = Math.max(...Object.values(prs));
+  prEl.innerHTML = keys.map(k =>
+    `<div class="pr-row">
+      <span class="pr-name">${k}</span>
+      <div class="pr-bar-wrap"><div class="pr-bar" style="width:${Math.round((prs[k]/maxPR)*100)}%"></div></div>
+      <span class="pr-val">${prs[k]} kg</span>
+    </div>`
+  ).join('');
+}
+
+async function renderHistory() {
+  const [{ data: lifts }, { data: bjj }, { data: meals }, { data: gut }, { data: bw }] = await Promise.all([
+    sb.from('lifts').select('*').order('date',{ascending:false}).limit(15),
+    sb.from('bjj').select('*').order('date',{ascending:false}).limit(15),
+    sb.from('meals').select('*').order('date',{ascending:false}).limit(10),
+    sb.from('gut_log').select('*').order('date',{ascending:false}).limit(10),
+    sb.from('bodyweight').select('*').order('date',{ascending:false}).limit(10),
+  ]);
+  const all = [
+    ...(lifts||[]).map(l=>({...l,kind:'lift'})),
+    ...(bjj||[]).map(l=>({...l,kind:'bjj'})),
+    ...(meals||[]).map(l=>({...l,kind:'meal'})),
+    ...(gut||[]).map(l=>({...l,kind:'gut'})),
+    ...(bw||[]).map(l=>({...l,kind:'weight'})),
+  ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,50);
+
+  const el = document.getElementById('history-list');
+  if (!all.length) { el.innerHTML = '<div class="empty">Nothing logged yet</div>'; return; }
+  el.innerHTML = all.map(l => {
+    let badge, detail;
+    if (l.kind==='lift') { badge='<span class="badge badge-lift">Lift</span>'; detail=`${l.session} · ${l.feel||''}`; }
+    else if (l.kind==='bjj') { badge='<span class="badge badge-bjj">BJJ</span>'; detail=`${l.type} · ${l.duration_min} min · energy: ${l.energy}${l.notes ? ' · '+l.notes : ''}`; }
+    else if (l.kind==='meal') { badge='<span class="badge badge-meal">Meals</span>'; detail=`${(l.meals||[]).filter(m=>m.eaten==='yes').length}/${(l.meals||[]).length} slots eaten`; }
+    else if (l.kind==='gut') { const gc = l.feel==='Good'?'good':l.feel==='Mild'?'mild':'bad'; badge=`<span class="badge badge-gut-${gc}">Gut</span>`; detail=`${l.feel}${l.notes ? ' · '+l.notes : ''}`; }
+    else { badge='<span class="badge badge-weight">Weight</span>'; detail=`${parseFloat(l.weight_kg).toFixed(1)} kg · ${l.time_of_day}`; }
+    return `<div class="log-row"><div class="log-date">${l.date}<br><br>${badge}</div><div><div style="font-size:13px;color:var(--text)">${detail}</div></div></div>`;
+  }).join('');
+}
+
+async function clearAll() {
+  await Promise.all([
+    sb.from('lifts').delete().neq('id',0),
+    sb.from('bjj').delete().neq('id',0),
+    sb.from('meals').delete().neq('id',0),
+    sb.from('gut_log').delete().neq('id',0),
+    sb.from('bodyweight').delete().neq('id',0),
+  ]);
+  localStorage.removeItem('prs');
+  toast('All data cleared');
+  renderDashboard();
+}
+
+function init() {
+  document.getElementById('lift-date').value = today();
+  document.getElementById('bjj-date').value = today();
+  document.getElementById('meal-date').value = today();
+  document.getElementById('bw-date').value = today();
+  renderLiftForm();
+  renderMealForm();
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>
