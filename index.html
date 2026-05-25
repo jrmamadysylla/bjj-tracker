@@ -2,11 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BJJ & Bulk Tracker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BJJ Tracker">
+<meta name="theme-color" content="#0e0e0e">
+<meta name="description" content="Personal BJJ and bulk training tracker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
 <style>
   :root {
     --bg: #0e0e0e; --surface: #161616; --surface2: #1f1f1f;
@@ -171,9 +185,11 @@
     <button class="nav-item" onclick="nav('mobility',this)"><span class="nav-icon">◇</span> Mobility</button>
     <button class="nav-item" onclick="nav('meal',this)"><span class="nav-icon">▣</span> Meals & gut</button>
     <button class="nav-item" onclick="nav('weight',this)"><span class="nav-icon">▷</span> Bodyweight</button>
+    <button class="nav-item" onclick="nav('measurements',this)"><span class="nav-icon">◉</span> Measurements</button>
     <div class="sidebar-section">Review</div>
     <button class="nav-item" onclick="nav('overload',this)"><span class="nav-icon">↗</span> Progression</button>
     <button class="nav-item" onclick="nav('history',this)"><span class="nav-icon">≡</span> History</button>
+    <button class="nav-item" onclick="nav('export',this)"><span class="nav-icon">⊠</span> Export</button>
   </nav>
 
   <main class="main">
@@ -383,6 +399,72 @@
       </div>
     </div>
 
+    <div id="page-measurements" class="page">
+      <div class="page-title">Measurements <span>cm</span></div>
+      <div class="info">Log every 2–4 weeks, same time of day, relaxed (not flexed). This is your physique check-in data — export it with your photos for AI analysis.</div>
+      <div class="card">
+        <div class="card-title">Log check-in</div>
+        <div class="form-group"><label class="form-label">Date</label><input type="date" id="meas-date" style="max-width:200px;"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Chest (cm)</label><input type="number" id="m-chest" step="0.5" placeholder="98"></div>
+          <div class="form-group"><label class="form-label">Waist (cm)</label><input type="number" id="m-waist" step="0.5" placeholder="80"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Shoulders (cm)</label><input type="number" id="m-shoulders" step="0.5" placeholder="112"></div>
+          <div class="form-group"><label class="form-label">Hips (cm)</label><input type="number" id="m-hips" step="0.5" placeholder="90"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Left arm (cm)</label><input type="number" id="m-arm-l" step="0.5" placeholder="34"></div>
+          <div class="form-group"><label class="form-label">Right arm (cm)</label><input type="number" id="m-arm-r" step="0.5" placeholder="34"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Left forearm (cm)</label><input type="number" id="m-forearm-l" step="0.5" placeholder="28"></div>
+          <div class="form-group"><label class="form-label">Right forearm (cm)</label><input type="number" id="m-forearm-r" step="0.5" placeholder="28"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Left thigh (cm)</label><input type="number" id="m-thigh-l" step="0.5" placeholder="56"></div>
+          <div class="form-group"><label class="form-label">Right thigh (cm)</label><input type="number" id="m-thigh-r" step="0.5" placeholder="56"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Left calf (cm)</label><input type="number" id="m-calf-l" step="0.5" placeholder="36"></div>
+          <div class="form-group"><label class="form-label">Right calf (cm)</label><input type="number" id="m-calf-r" step="0.5" placeholder="36"></div>
+        </div>
+        <div class="form-group" style="margin-top:8px;"><label class="form-label">Notes</label>
+          <input type="text" id="m-notes" placeholder="Feeling leaner, arms looking fuller...">
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="saveMeasurements()">Save check-in</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Check-in history</div>
+        <div id="meas-history"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <div id="page-export" class="page">
+      <div class="page-title">Export <span>for physique analysis</span></div>
+      <div class="info">Generate a text summary to paste into a Claude chat alongside your progression photos. Update the HRV and resting HR manually from your Apple Watch Health app.</div>
+      <div class="card">
+        <div class="card-title">Apple Watch stats <span style="font-size:11px;color:var(--hint);font-weight:400;text-transform:none;letter-spacing:0;">enter manually from Health app</span></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Avg HRV (ms)</label><input type="number" id="exp-hrv" placeholder="58" step="1"></div>
+          <div class="form-group"><label class="form-label">Resting HR (bpm)</label><input type="number" id="exp-rhr" placeholder="54" step="1"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Generate export</div>
+        <div class="btn-row" style="margin-top:0;">
+          <button class="btn btn-primary" onclick="generateExport()">Generate summary</button>
+        </div>
+        <div id="export-output" style="display:none;margin-top:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:12px;color:var(--muted);">Copy and paste into Claude with your photos</span>
+            <button class="btn btn-sm" onclick="copyExport()">Copy</button>
+          </div>
+          <textarea id="export-text" style="width:100%;min-height:320px;font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);padding:12px;resize:vertical;line-height:1.6;" readonly></textarea>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -392,35 +474,45 @@ const SUPABASE_KEY = 'sb_publishable_Vlaf075-sPY0nMc2J5x73w_uLEI-JeB';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const EX_CONFIG = {
-  'Barbell bench press':   { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
-  'Weighted pull-ups':     { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
-  'Overhead press':        { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Barbell row':           { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Face pulls':            { sets:3, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
-  'Hammer curls':          { sets:2, minRep:12, maxRep:12, inc:2,   type:'db'      },
-  'Rear delt fly':         { sets:3, minRep:15, maxRep:15, inc:2,   type:'db'      },
-  'Incline DB press':      { sets:4, minRep:8,  maxRep:10, inc:2,   type:'db'      },
-  'Cable row':             { sets:4, minRep:10, maxRep:12, inc:2.5, type:'cable'   },
-  'DB shoulder press':     { sets:3, minRep:10, maxRep:12, inc:2,   type:'db'      },
-  'Lat pulldown':          { sets:3, minRep:10, maxRep:12, inc:2.5, type:'cable'   },
-  'Lateral raises':        { sets:4, minRep:15, maxRep:15, inc:2,   type:'db'      },
-  'Tricep pushdowns':      { sets:2, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
-  'Squat':                 { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
-  'Romanian deadlift':     { sets:3, minRep:8,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Leg press':             { sets:3, minRep:10, maxRep:12, inc:2.5, type:'machine' },
-  'Leg curl':              { sets:3, minRep:10, maxRep:12, inc:2.5, type:'machine' },
-  'Calf raises':           { sets:3, minRep:15, maxRep:20, inc:2.5, type:'machine' },
-  'Hanging knee raises':   { sets:3, minRep:10, maxRep:12, inc:0,   type:'bw'     },
-  'Deadlift':              { sets:3, minRep:5,  maxRep:5,  inc:2.5, type:'barbell' },
-  'Bulgarian split squat': { sets:3, minRep:10, maxRep:10, inc:2,   type:'db'     },
-  'Plank hold':            { sets:3, minRep:0,  maxRep:0,  inc:0,   type:'bw'     },
+  // Upper A — strength
+  'Barbell bench press':        { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
+  'Weighted pull-ups':          { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
+  'Overhead press':             { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
+  'Barbell row':                { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
+  'Face pulls':                 { sets:3, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
+  'Rear delt fly':              { sets:3, minRep:15, maxRep:15, inc:2,   type:'db'      },
+  'EZ bar preacher curls':      { sets:3, minRep:10, maxRep:12, inc:2,   type:'barbell' },
+  'Farmer carries':             { sets:3, minRep:0,  maxRep:0,  inc:0,   type:'bw'      },
+  // Upper B — volume
+  'Incline DB press':           { sets:4, minRep:8,  maxRep:10, inc:2,   type:'db'      },
+  'Cable row':                  { sets:4, minRep:10, maxRep:12, inc:2.5, type:'cable'   },
+  'DB shoulder press':          { sets:3, minRep:10, maxRep:12, inc:2,   type:'db'      },
+  'Lat pulldown':               { sets:3, minRep:10, maxRep:12, inc:2.5, type:'cable'   },
+  'Pec dec / cable crossover':  { sets:3, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
+  'Lateral raises':             { sets:4, minRep:15, maxRep:15, inc:2,   type:'db'      },
+  'Overhead tricep extension':  { sets:3, minRep:12, maxRep:12, inc:2,   type:'db'      },
+  'Tricep pushdowns':           { sets:2, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
+  'Hammer curls':               { sets:2, minRep:12, maxRep:12, inc:2,   type:'db'      },
+  'Reverse wrist curls':        { sets:3, minRep:15, maxRep:15, inc:0,   type:'db'      },
+  // Lower A — strength
+  'Squat':                      { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
+  'Romanian deadlift':          { sets:3, minRep:8,  maxRep:8,  inc:2.5, type:'barbell' },
+  'Leg press':                  { sets:3, minRep:10, maxRep:12, inc:2.5, type:'machine' },
+  'Leg curl':                   { sets:3, minRep:10, maxRep:12, inc:2.5, type:'machine' },
+  'Calf raises':                { sets:3, minRep:15, maxRep:20, inc:2.5, type:'machine' },
+  'Hanging knee raises':        { sets:3, minRep:10, maxRep:12, inc:0,   type:'bw'      },
+  'Wrist curls':                { sets:3, minRep:15, maxRep:15, inc:0,   type:'db'      },
+  // Lower B — volume
+  'Deadlift':                   { sets:3, minRep:5,  maxRep:5,  inc:2.5, type:'barbell' },
+  'Bulgarian split squat':      { sets:3, minRep:10, maxRep:10, inc:2,   type:'db'      },
+  'Plank hold':                 { sets:3, minRep:0,  maxRep:0,  inc:0,   type:'bw'      },
 };
 
 const PROGRAMMES = {
-  'Upper A': ['Barbell bench press','Weighted pull-ups','Overhead press','Barbell row','Face pulls','Rear delt fly','Hammer curls'],
-  'Upper B': ['Incline DB press','Cable row','DB shoulder press','Lat pulldown','Lateral raises','Tricep pushdowns'],
-  'Lower A': ['Squat','Romanian deadlift','Leg press','Leg curl','Calf raises','Hanging knee raises'],
-  'Lower B': ['Deadlift','Bulgarian split squat','Leg press','Leg curl','Calf raises','Plank hold'],
+  'Upper A': ['Barbell bench press','Weighted pull-ups','Overhead press','Barbell row','Face pulls','Rear delt fly','EZ bar preacher curls','Farmer carries'],
+  'Upper B': ['Incline DB press','Cable row','DB shoulder press','Lat pulldown','Pec dec / cable crossover','Lateral raises','Overhead tricep extension','Tricep pushdowns','Hammer curls','Reverse wrist curls'],
+  'Lower A': ['Squat','Romanian deadlift','Leg press','Leg curl','Calf raises','Hanging knee raises','Wrist curls'],
+  'Lower B': ['Deadlift','Bulgarian split squat','Leg press','Leg curl','Calf raises','Plank hold','Wrist curls'],
 };
 
 const MEAL_SLOTS = ['Breakfast','Pre-training snack','Lunch','Post-training','Dinner','Evening snack'];
@@ -461,6 +553,7 @@ function nav(page, btn) {
   if (page === 'history') renderHistory();
   if (page === 'weight') renderBWHistory();
   if (page === 'overload') renderProgressionPage();
+  if (page === 'measurements') renderMeasurementsHistory();
   if (page === 'mobility') renderMobilityStreak();
 }
 
@@ -746,12 +839,130 @@ async function renderHistory() {
   }).join('');
 }
 
+async function saveMeasurements() {
+  const date = document.getElementById('meas-date').value || today();
+  const data = {
+    date,
+    chest: parseFloat(document.getElementById('m-chest').value) || null,
+    waist: parseFloat(document.getElementById('m-waist').value) || null,
+    shoulders: parseFloat(document.getElementById('m-shoulders').value) || null,
+    hips: parseFloat(document.getElementById('m-hips').value) || null,
+    arm_l: parseFloat(document.getElementById('m-arm-l').value) || null,
+    arm_r: parseFloat(document.getElementById('m-arm-r').value) || null,
+    forearm_l: parseFloat(document.getElementById('m-forearm-l').value) || null,
+    forearm_r: parseFloat(document.getElementById('m-forearm-r').value) || null,
+    thigh_l: parseFloat(document.getElementById('m-thigh-l').value) || null,
+    thigh_r: parseFloat(document.getElementById('m-thigh-r').value) || null,
+    calf_l: parseFloat(document.getElementById('m-calf-l').value) || null,
+    calf_r: parseFloat(document.getElementById('m-calf-r').value) || null,
+    notes: document.getElementById('m-notes').value || null,
+  };
+  const { error } = await sb.from('measurements').insert(data);
+  if (error) { toast('Error saving measurements', true); return; }
+  toast('Check-in saved');
+  ['m-chest','m-waist','m-shoulders','m-hips','m-arm-l','m-arm-r','m-forearm-l','m-forearm-r','m-thigh-l','m-thigh-r','m-calf-l','m-calf-r','m-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  renderMeasurementsHistory();
+}
+
+async function renderMeasurementsHistory() {
+  const { data } = await sb.from('measurements').select('*').order('date',{ascending:false}).limit(10);
+  const el = document.getElementById('meas-history');
+  if (!data?.length) { el.innerHTML = '<div class="empty">No check-ins yet</div>'; return; }
+  el.innerHTML = data.map(m => `
+    <div class="log-row">
+      <div class="log-date">${m.date}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+        ${m.chest ? `Chest: <strong style="color:var(--text)">${m.chest}cm</strong> · ` : ''}
+        ${m.waist ? `Waist: <strong style="color:var(--text)">${m.waist}cm</strong> · ` : ''}
+        ${m.shoulders ? `Shoulders: <strong style="color:var(--text)">${m.shoulders}cm</strong>` : ''}<br>
+        ${m.arm_l ? `Arms: <strong style="color:var(--text)">${m.arm_l}/${m.arm_r}cm</strong> · ` : ''}
+        ${m.forearm_l ? `Forearms: <strong style="color:var(--text)">${m.forearm_l}/${m.forearm_r}cm</strong>` : ''}<br>
+        ${m.thigh_l ? `Thighs: <strong style="color:var(--text)">${m.thigh_l}/${m.thigh_r}cm</strong> · ` : ''}
+        ${m.calf_l ? `Calves: <strong style="color:var(--text)">${m.calf_l}/${m.calf_r}cm</strong>` : ''}
+        ${m.notes ? `<br><span style="color:var(--hint);font-size:11px;">${m.notes}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function generateExport() {
+  const [{ data: bw }, { data: meas }, { data: lifts }, { data: bjjLogs }, { data: mobLogs }, { data: weights }] = await Promise.all([
+    sb.from('bodyweight').select('*').order('date',{ascending:false}).limit(8),
+    sb.from('measurements').select('*').order('date',{ascending:false}).limit(2),
+    sb.from('lifts').select('date').gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
+    sb.from('bjj').select('date').gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
+    sb.from('mobility_log').select('date').eq('completed',true).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
+    sb.from('exercise_weights').select('*').order('exercise'),
+  ]);
+
+  const hrv = document.getElementById('exp-hrv').value;
+  const rhr = document.getElementById('exp-rhr').value;
+  const latest = bw?.[0];
+  const trend = bw ? [...bw].reverse().map(w=>parseFloat(w.weight_kg).toFixed(1)+'kg').join(' → ') : '—';
+  const latestMeas = meas?.[0];
+  const prevMeas = meas?.[1];
+  const exportDate = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  let txt = `BJJ TRACKER EXPORT — ${exportDate}\n`;
+  txt += `${'─'.repeat(40)}\n\n`;
+
+  txt += `BODYWEIGHT\n`;
+  txt += `Current: ${latest ? parseFloat(latest.weight_kg).toFixed(1)+' kg' : '—'}\n`;
+  txt += `Trend (recent): ${trend}\n\n`;
+
+  if (latestMeas) {
+    txt += `MEASUREMENTS (${latestMeas.date})\n`;
+    if (latestMeas.chest) txt += `Chest: ${latestMeas.chest} cm${prevMeas?.chest ? ` (prev: ${prevMeas.chest})` : ''}\n`;
+    if (latestMeas.waist) txt += `Waist: ${latestMeas.waist} cm${prevMeas?.waist ? ` (prev: ${prevMeas.waist})` : ''}\n`;
+    if (latestMeas.shoulders) txt += `Shoulders: ${latestMeas.shoulders} cm${prevMeas?.shoulders ? ` (prev: ${prevMeas.shoulders})` : ''}\n`;
+    if (latestMeas.hips) txt += `Hips: ${latestMeas.hips} cm${prevMeas?.hips ? ` (prev: ${prevMeas.hips})` : ''}\n`;
+    if (latestMeas.arm_l) txt += `Arms: L ${latestMeas.arm_l} / R ${latestMeas.arm_r} cm${prevMeas?.arm_l ? ` (prev: ${prevMeas.arm_l}/${prevMeas.arm_r})` : ''}\n`;
+    if (latestMeas.forearm_l) txt += `Forearms: L ${latestMeas.forearm_l} / R ${latestMeas.forearm_r} cm${prevMeas?.forearm_l ? ` (prev: ${prevMeas.forearm_l}/${prevMeas.forearm_r})` : ''}\n`;
+    if (latestMeas.thigh_l) txt += `Thighs: L ${latestMeas.thigh_l} / R ${latestMeas.thigh_r} cm${prevMeas?.thigh_l ? ` (prev: ${prevMeas.thigh_l}/${prevMeas.thigh_r})` : ''}\n`;
+    if (latestMeas.calf_l) txt += `Calves: L ${latestMeas.calf_l} / R ${latestMeas.calf_r} cm${prevMeas?.calf_l ? ` (prev: ${prevMeas.calf_l}/${prevMeas.calf_r})` : ''}\n`;
+    txt += '\n';
+  }
+
+  txt += `WORKING WEIGHTS\n`;
+  (weights||[]).filter(w=>w.weight_kg>0).forEach(w => {
+    txt += `${w.exercise}: ${w.weight_kg} kg\n`;
+  });
+  txt += '\n';
+
+  txt += `TRAINING THIS MONTH\n`;
+  txt += `Lifts completed: ${lifts?.length || 0}\n`;
+  txt += `BJJ sessions: ${bjjLogs?.length || 0}\n`;
+  txt += `Mobility sessions: ${mobLogs?.length || 0}\n\n`;
+
+  if (hrv || rhr) {
+    txt += `RECOVERY (Apple Watch)\n`;
+    if (hrv) txt += `Avg HRV: ${hrv} ms\n`;
+    if (rhr) txt += `Resting HR: ${rhr} bpm\n`;
+    txt += '\n';
+  }
+
+  txt += `CONTEXT\n`;
+  txt += `Training: Upper/Lower 4x/week + BJJ 5-6x/week + daily mobility\n`;
+  txt += `Goal: Clean bulk, Frank Zane classic physique aesthetic\n`;
+  txt += `Diet: No dairy, no fish, no pork. Whole foods. 2,800-3,200 kcal.\n`;
+  txt += `Focus areas: Forearms, chest, bicep peak, lateral delts (long arms)\n`;
+
+  document.getElementById('export-text').value = txt;
+  document.getElementById('export-output').style.display = 'block';
+}
+
+function copyExport() {
+  const txt = document.getElementById('export-text');
+  txt.select();
+  navigator.clipboard.writeText(txt.value).then(() => toast('Copied to clipboard'));
+}
+
 async function clearAll() {
   await Promise.all([
     sb.from('lifts').delete().neq('id',0), sb.from('bjj').delete().neq('id',0),
     sb.from('meals').delete().neq('id',0), sb.from('gut_log').delete().neq('id',0),
     sb.from('bodyweight').delete().neq('id',0), sb.from('mobility_log').delete().neq('id',0),
     sb.from('exercise_weights').delete().neq('id',0),
+    sb.from('measurements').delete().neq('id',0),
   ]);
   toast('All data cleared');
   renderDashboard();
@@ -759,7 +970,7 @@ async function clearAll() {
 
 async function init() {
   const t = today();
-  ['lift-date','bjj-date','mob-date','meal-date','bw-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=t; });
+  ['lift-date','bjj-date','mob-date','meal-date','bw-date','meas-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=t; });
   const hr = new Date().getHours();
   const note = document.getElementById('lift-5am-note');
   if (hr < 7) note.style.display = 'block';
