@@ -165,8 +165,9 @@
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">BJJ/BULK TRACKER</div>
-    <div class="auth-sub">Enter password to continue</div>
+    <div class="auth-sub">Sign in to your account</div>
     <div class="form-group">
+      <input type="text" id="auth-username" placeholder="Username" style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')checkAuth()">
       <input type="password" id="auth-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkAuth()">
     </div>
     <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="checkAuth()">Unlock</button>
@@ -527,16 +528,22 @@ function toast(msg, isError) {
   setTimeout(() => t.className = 'toast', 2200);
 }
 
+let CURRENT_USER = null;
+
 async function checkAuth() {
+  const username = document.getElementById('auth-username').value.trim().toLowerCase();
   const input = document.getElementById('auth-input').value;
   const errEl = document.getElementById('auth-error');
-  if (!input) { errEl.textContent = 'Enter a password'; return; }
-  const { data, error } = await sb.from('config').select('value').eq('key','password').single();
-  if (error || !data) { errEl.textContent = 'Could not verify — check connection'; return; }
+  if (!username || !input) { errEl.textContent = 'Enter username and password'; return; }
+  const { data, error } = await sb.from('config').select('value').eq('key', 'user:' + username).single();
+  if (error || !data) { errEl.textContent = 'User not found'; return; }
   if (input === data.value) {
+    CURRENT_USER = username;
     sessionStorage.setItem('auth','ok');
+    sessionStorage.setItem('user', username);
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'grid';
+    document.querySelector('.sidebar-logo').innerHTML = `BJJ/BULK<span>@${username}</span>`;
     init();
   } else {
     errEl.textContent = 'Incorrect password';
@@ -558,12 +565,12 @@ function nav(page, btn) {
 }
 
 async function loadWeights() {
-  const { data } = await sb.from('exercise_weights').select('*');
+  const { data } = await sb.from('exercise_weights').select('*').eq('user_id', CURRENT_USER);
   if (data) data.forEach(r => { currentWeights[r.exercise] = { kg: parseFloat(r.weight_kg), inc: parseFloat(r.increment) }; });
 }
 
 async function setWeight(exercise, kg) {
-  await sb.from('exercise_weights').upsert({ exercise, weight_kg: kg, updated_at: new Date().toISOString() }, { onConflict: 'exercise' });
+  await sb.from('exercise_weights').upsert({ exercise, weight_kg: kg, updated_at: new Date().toISOString(), user_id: CURRENT_USER }, { onConflict: 'exercise,user_id' });
   currentWeights[exercise] = { ...currentWeights[exercise], kg };
 }
 
@@ -619,7 +626,7 @@ async function saveLift() {
       note: document.getElementById(`e${ei}s${s}note`)?.value || '',
     }))};
   });
-  const { error } = await sb.from('lifts').insert({ date, session, exercises, feel });
+  const { error } = await sb.from('lifts').insert({ date, session, exercises, feel, user_id: CURRENT_USER });
   if (error) { toast('Error saving lift', true); return; }
   const alerts = [];
   for (const ex of exercises) {
@@ -649,6 +656,7 @@ async function saveBJJ() {
     duration_min: parseInt(document.getElementById('bjj-dur').value) || 60,
     energy: document.getElementById('bjj-energy').value,
     notes: document.getElementById('bjj-notes').value,
+    user_id: CURRENT_USER,
   });
   if (error) { toast('Error saving BJJ', true); return; }
   document.getElementById('bjj-notes').value = '';
@@ -657,7 +665,7 @@ async function saveBJJ() {
 
 async function saveMobility() {
   const date = document.getElementById('mob-date').value || today();
-  const { error } = await sb.from('mobility_log').upsert({ date, completed: true, duration_min: 15, notes: document.getElementById('mob-notes').value }, { onConflict: 'date' });
+  const { error } = await sb.from('mobility_log').upsert({ date, completed: true, duration_min: 15, notes: document.getElementById('mob-notes').value, user_id: CURRENT_USER }, { onConflict: 'date,user_id' });
   if (error) { toast('Error saving mobility', true); return; }
   document.getElementById('mob-notes').value = '';
   toast('Mobility logged ✓');
@@ -665,7 +673,7 @@ async function saveMobility() {
 }
 
 async function renderMobilityStreak() {
-  const { data } = await sb.from('mobility_log').select('date').eq('completed',true).order('date',{ascending:false}).limit(28);
+  const { data } = await sb.from('mobility_log').select('date').eq('completed',true).eq('user_id', CURRENT_USER).order('date',{ascending:false}).limit(28);
   const done = new Set((data||[]).map(r=>r.date));
   const dots = [];
   for (let i = 27; i >= 0; i--) {
@@ -695,7 +703,7 @@ function renderMealForm() {
 async function saveMeals() {
   const date = document.getElementById('meal-date').value || today();
   const meals = MEAL_SLOTS.map((m,i) => ({ slot:m, food: document.getElementById(`meal${i}`)?.value||'', eaten: document.getElementById(`meal${i}eaten`)?.value||'yes' }));
-  const { error } = await sb.from('meals').insert({ date, meals });
+  const { error } = await sb.from('meals').insert({ date, meals, user_id: CURRENT_USER });
   if (error) { toast('Error saving meals', true); return; }
   toast('Meals saved');
 }
@@ -705,6 +713,7 @@ async function saveGut() {
     date: document.getElementById('meal-date').value || today(),
     feel: document.getElementById('gut-feel').value,
     notes: document.getElementById('gut-notes').value,
+    user_id: CURRENT_USER,
   });
   if (error) { toast('Error saving gut log', true); return; }
   document.getElementById('gut-notes').value = '';
@@ -714,7 +723,7 @@ async function saveGut() {
 async function saveBW() {
   const weight_kg = parseFloat(document.getElementById('bw-val').value);
   if (isNaN(weight_kg)) { toast('Enter a valid weight', true); return; }
-  const { error } = await sb.from('bodyweight').insert({ date: document.getElementById('bw-date').value||today(), weight_kg, time_of_day: document.getElementById('bw-time').value });
+  const { error } = await sb.from('bodyweight').insert({ date: document.getElementById('bw-date').value||today(), weight_kg, time_of_day: document.getElementById('bw-time').value, user_id: CURRENT_USER });
   if (error) { toast('Error saving weight', true); return; }
   document.getElementById('bw-val').value = '';
   toast('Weight saved');
@@ -722,7 +731,7 @@ async function saveBW() {
 }
 
 async function renderBWHistory() {
-  const { data } = await sb.from('bodyweight').select('*').order('date',{ascending:false}).limit(20);
+  const { data } = await sb.from('bodyweight').select('*').eq('user_id', CURRENT_USER).order('date',{ascending:false}).limit(20);
   const el = document.getElementById('bw-history');
   if (!data?.length) { el.innerHTML = '<div class="empty">No entries yet</div>'; return; }
   el.innerHTML = data.map(l => `<div class="log-row"><div class="log-date">${l.date}</div><div>${parseFloat(l.weight_kg).toFixed(1)} kg <span style="color:var(--hint);font-size:11px;margin-left:6px;">${l.time_of_day}</span></div></div>`).join('');
@@ -764,13 +773,13 @@ async function renderDashboard() {
   const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const tod = today();
   const [{ data: lifts },{ data: bjj },{ data: mob },{ data: bw },{ data: allLifts },{ data: allBJJ },{ data: mobAll }] = await Promise.all([
-    sb.from('lifts').select('date').gte('date',weekDates[0]),
-    sb.from('bjj').select('date').gte('date',weekDates[0]),
-    sb.from('mobility_log').select('date').eq('completed',true).gte('date',weekDates[0]),
-    sb.from('bodyweight').select('weight_kg,date').order('date',{ascending:false}).limit(10),
-    sb.from('lifts').select('date').order('date',{ascending:false}),
-    sb.from('bjj').select('date').order('date',{ascending:false}),
-    sb.from('mobility_log').select('date').eq('completed',true).order('date',{ascending:false}),
+    sb.from('lifts').select('date').eq('user_id',CURRENT_USER).gte('date',weekDates[0]),
+    sb.from('bjj').select('date').eq('user_id',CURRENT_USER).gte('date',weekDates[0]),
+    sb.from('mobility_log').select('date').eq('completed',true).eq('user_id',CURRENT_USER).gte('date',weekDates[0]),
+    sb.from('bodyweight').select('weight_kg,date').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(10),
+    sb.from('lifts').select('date').eq('user_id',CURRENT_USER).order('date',{ascending:false}),
+    sb.from('bjj').select('date').eq('user_id',CURRENT_USER).order('date',{ascending:false}),
+    sb.from('mobility_log').select('date').eq('completed',true).eq('user_id',CURRENT_USER).order('date',{ascending:false}),
   ]);
   const lArr=lifts||[], bArr=bjj||[], mArr=mob||[], wArr=bw||[];
   document.getElementById('s-lifts').textContent = lArr.length;
@@ -810,12 +819,12 @@ async function renderDashboard() {
 
 async function renderHistory() {
   const [{ data: lifts },{ data: bjj },{ data: meals },{ data: gut },{ data: bw },{ data: mob }] = await Promise.all([
-    sb.from('lifts').select('*').order('date',{ascending:false}).limit(12),
-    sb.from('bjj').select('*').order('date',{ascending:false}).limit(12),
-    sb.from('meals').select('*').order('date',{ascending:false}).limit(8),
-    sb.from('gut_log').select('*').order('date',{ascending:false}).limit(8),
-    sb.from('bodyweight').select('*').order('date',{ascending:false}).limit(8),
-    sb.from('mobility_log').select('*').order('date',{ascending:false}).limit(12),
+    sb.from('lifts').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
+    sb.from('bjj').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
+    sb.from('meals').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
+    sb.from('gut_log').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
+    sb.from('bodyweight').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
+    sb.from('mobility_log').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
   ]);
   const all = [
     ...(lifts||[]).map(l=>({...l,kind:'lift'})),
@@ -857,7 +866,7 @@ async function saveMeasurements() {
     calf_r: parseFloat(document.getElementById('m-calf-r').value) || null,
     notes: document.getElementById('m-notes').value || null,
   };
-  const { error } = await sb.from('measurements').insert(data);
+  const { error } = await sb.from('measurements').insert({...data, user_id: CURRENT_USER});
   if (error) { toast('Error saving measurements', true); return; }
   toast('Check-in saved');
   ['m-chest','m-waist','m-shoulders','m-hips','m-arm-l','m-arm-r','m-forearm-l','m-forearm-r','m-thigh-l','m-thigh-r','m-calf-l','m-calf-r','m-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
@@ -865,7 +874,7 @@ async function saveMeasurements() {
 }
 
 async function renderMeasurementsHistory() {
-  const { data } = await sb.from('measurements').select('*').order('date',{ascending:false}).limit(10);
+  const { data } = await sb.from('measurements').select('*').eq('user_id', CURRENT_USER).order('date',{ascending:false}).limit(10);
   const el = document.getElementById('meas-history');
   if (!data?.length) { el.innerHTML = '<div class="empty">No check-ins yet</div>'; return; }
   el.innerHTML = data.map(m => `
@@ -886,12 +895,12 @@ async function renderMeasurementsHistory() {
 
 async function generateExport() {
   const [{ data: bw }, { data: meas }, { data: lifts }, { data: bjjLogs }, { data: mobLogs }, { data: weights }] = await Promise.all([
-    sb.from('bodyweight').select('*').order('date',{ascending:false}).limit(8),
-    sb.from('measurements').select('*').order('date',{ascending:false}).limit(2),
-    sb.from('lifts').select('date').gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
-    sb.from('bjj').select('date').gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
-    sb.from('mobility_log').select('date').eq('completed',true).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
-    sb.from('exercise_weights').select('*').order('exercise'),
+    sb.from('bodyweight').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
+    sb.from('measurements').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(2),
+    sb.from('lifts').select('date').eq('user_id',CURRENT_USER).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
+    sb.from('bjj').select('date').eq('user_id',CURRENT_USER).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
+    sb.from('mobility_log').select('date').eq('completed',true).eq('user_id',CURRENT_USER).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
+    sb.from('exercise_weights').select('*').eq('user_id',CURRENT_USER).order('exercise'),
   ]);
 
   const hrv = document.getElementById('exp-hrv').value;
@@ -958,11 +967,14 @@ function copyExport() {
 
 async function clearAll() {
   await Promise.all([
-    sb.from('lifts').delete().neq('id',0), sb.from('bjj').delete().neq('id',0),
-    sb.from('meals').delete().neq('id',0), sb.from('gut_log').delete().neq('id',0),
-    sb.from('bodyweight').delete().neq('id',0), sb.from('mobility_log').delete().neq('id',0),
-    sb.from('exercise_weights').delete().neq('id',0),
-    sb.from('measurements').delete().neq('id',0),
+    sb.from('lifts').delete().eq('user_id',CURRENT_USER),
+    sb.from('bjj').delete().eq('user_id',CURRENT_USER),
+    sb.from('meals').delete().eq('user_id',CURRENT_USER),
+    sb.from('gut_log').delete().eq('user_id',CURRENT_USER),
+    sb.from('bodyweight').delete().eq('user_id',CURRENT_USER),
+    sb.from('mobility_log').delete().eq('user_id',CURRENT_USER),
+    sb.from('exercise_weights').delete().eq('user_id',CURRENT_USER),
+    sb.from('measurements').delete().eq('user_id',CURRENT_USER),
   ]);
   toast('All data cleared');
   renderDashboard();
@@ -974,13 +986,15 @@ async function init() {
   const hr = new Date().getHours();
   const note = document.getElementById('lift-5am-note');
   if (hr < 7) note.style.display = 'block';
+  if (CURRENT_USER) document.querySelector('.sidebar-logo').innerHTML = `BJJ/BULK<span>@${CURRENT_USER}</span>`;
   await loadWeights();
   await renderLiftForm();
   renderMealForm();
   await renderDashboard();
 }
 
-if (sessionStorage.getItem('auth') === 'ok') {
+if (sessionStorage.getItem('auth') === 'ok' && sessionStorage.getItem('user')) {
+  CURRENT_USER = sessionStorage.getItem('user');
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   init();
