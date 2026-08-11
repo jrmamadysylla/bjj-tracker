@@ -93,8 +93,8 @@
   .ex-target { font-size: 11px; color: var(--hint); }
   .ex-suggested { font-size: 11px; color: var(--purple); background: var(--purple-dim); padding: 2px 8px; border-radius: 20px; }
   .ex-inc-badge { font-size: 10px; color: var(--teal); background: var(--teal-dim); padding: 2px 7px; border-radius: 20px; }
-  .set-header { display: grid; grid-template-columns: 32px 90px 90px 1fr; gap: 6px; font-size: 10px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; padding: 0 2px; }
-  .set-row { display: grid; grid-template-columns: 32px 90px 90px 1fr; gap: 6px; margin-bottom: 4px; align-items: center; }
+  .set-header { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 6px; font-size: 10px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; padding: 0 2px; }
+  .set-row { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 6px; margin-bottom: 4px; align-items: center; }
   .set-num { font-size: 11px; color: var(--hint); text-align: center; }
   .set-row input { padding: 6px 8px; }
   .btn { padding: 9px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
@@ -155,7 +155,7 @@
     .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .meal-slot { grid-template-columns: 1fr; }
     .mob-routine { grid-template-columns: 1fr; }
-    .set-header, .set-row { grid-template-columns: 28px 80px 80px 1fr; }
+    .set-header, .set-row { grid-template-columns: 28px 1fr 1fr; }
     .layout { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .main { padding: 1rem 1rem 5rem; }
@@ -233,7 +233,6 @@
   </nav>
   <!-- More menu (mobile) -->
   <div class="more-menu" id="more-menu">
-    <button class="more-item" onclick="nav('meal',this);closeMobileNav()"><span>▣</span> Meals & gut</button>
     <button class="more-item" onclick="nav('weight',this);closeMobileNav()"><span>▷</span> Bodyweight</button>
     <button class="more-item" onclick="nav('measurements',this);closeMobileNav()"><span>◉</span> Measurements</button>
     <button class="more-item" onclick="nav('overload',this);closeMobileNav()"><span>↗</span> Progression</button>
@@ -249,7 +248,6 @@
     <button class="nav-item" onclick="nav('lift',this)"><span class="nav-icon">↑</span> Lift session</button>
     <button class="nav-item" onclick="nav('bjj',this)"><span class="nav-icon">◎</span> BJJ session</button>
     <button class="nav-item" onclick="nav('mobility',this)"><span class="nav-icon">◇</span> Mobility</button>
-    <button class="nav-item" onclick="nav('meal',this)"><span class="nav-icon">▣</span> Meals & gut</button>
     <button class="nav-item" onclick="nav('weight',this)"><span class="nav-icon">▷</span> Bodyweight</button>
     <button class="nav-item" onclick="nav('measurements',this)"><span class="nav-icon">◉</span> Measurements</button>
     <div class="sidebar-section">Review</div>
@@ -341,49 +339,69 @@
 
     <div id="page-mobility" class="page">
       <div class="page-title">Daily mobility <span>15 min</span></div>
-      <div class="warn">Built for your stack: desk job (hip flexors, thoracic spine, neck) + BJJ (hip rotation, shoulders, hamstrings) + lifting (ankles, lats, wrists). Do this every morning before training or as a standalone on rest days.</div>
+      <div class="warn">Mat, kettlebell and belt only. No bar needed. Based on BJJ-specific research — prioritises hip CARs, 90/90, frog stretch and thoracic work which consistently show up as highest impact for grapplers.</div>
       <div class="card">
         <div class="card-title">Today's routine</div>
         <div class="mob-routine">
           <div class="mob-ex">
-            <div class="mob-ex-tag">Desk / hips</div>
+            <div class="mob-ex-tag">Hips / BJJ</div>
+            <div class="mob-ex-title">Hip CARs</div>
+            <div class="mob-ex-detail">On all fours, brace core. Lift one knee and slowly circle through full range — forward, out, back, down. 5 slow reps each direction, each side. Trains active hip control for guard retention and escapes.</div>
+          </div>
+          <div class="mob-ex">
+            <div class="mob-ex-tag">Hips / desk job</div>
             <div class="mob-ex-title">90/90 hip stretch</div>
-            <div class="mob-ex-detail">Front and back leg at 90°. Lean forward over front shin. 45 sec each side × 2. Opens guard depth and counters sitting.</div>
+            <div class="mob-ex-detail">Front and back leg at 90°. Lean forward over front shin, hold 45 sec each side × 2. Most important stretch for guard depth and desk hip flexors.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">Desk / thoracic</div>
-            <div class="mob-ex-title">Thoracic rotation</div>
-            <div class="mob-ex-detail">Sit cross-legged, hands behind head, rotate slowly each side. 10 reps × 2. Undoes desk and BJJ top position hunching.</div>
+            <div class="mob-ex-tag">Hips / BJJ</div>
+            <div class="mob-ex-title">Frog stretch</div>
+            <div class="mob-ex-detail">On all fours, slide knees wide until you feel inner thigh stretch. Sink hips back slowly, hold 45 sec × 2. Increases hip external rotation — directly relevant to side control, guard and passing.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">BJJ / shoulders</div>
+            <div class="mob-ex-tag">Hips / BJJ + KB</div>
+            <div class="mob-ex-title">Cossack squat</div>
+            <div class="mob-ex-detail">Wide stance, shift weight into one leg, sink into deep lateral lunge, other leg straight. 8 slow reps each side. Hold KB at chest for more depth. Best single exercise for BJJ hip mobility — covers passing, scrambles and single legs.</div>
+          </div>
+          <div class="mob-ex">
+            <div class="mob-ex-tag">Thoracic / desk + BJJ</div>
             <div class="mob-ex-title">Thread the needle</div>
-            <div class="mob-ex-detail">On all fours, slide arm under body and rotate. Hold 30 sec each side × 2. Opens shoulder internal rotation for escapes.</div>
+            <div class="mob-ex-detail">On all fours, slide one arm under body and rotate open. Hold 30 sec each side × 2. Undoes desk and BJJ top position hunching. Opens shoulder internal rotation for escapes and frames.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">BJJ / hips</div>
-            <div class="mob-ex-title">Deep squat hold</div>
-            <div class="mob-ex-detail">Heels down, elbows pushing knees out. Hold 60 sec total. Builds guard depth and hip flexor length under load.</div>
+            <div class="mob-ex-tag">Thoracic / BJJ</div>
+            <div class="mob-ex-title">Thoracic rotation (seated)</div>
+            <div class="mob-ex-detail">Sit cross-legged, hands behind head. Rotate slowly each direction, 10 reps × 2. Works thoracic extension — keeps your pressure driving down into your opponent.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">Lifting / ankles</div>
-            <div class="mob-ex-title">Ankle circles + wall drill</div>
-            <div class="mob-ex-detail">10 slow circles each direction, then knee-to-wall drill 10 reps per side. Essential for squat depth.</div>
+            <div class="mob-ex-tag">Hamstrings / BJJ + belt</div>
+            <div class="mob-ex-title">Lying hamstring stretch with belt</div>
+            <div class="mob-ex-detail">Lie on back, loop your BJJ belt around one foot, straighten leg and pull toward you. Hold 45 sec each side. Essential for guard play and hip escapes when stacked.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">Lifting / lats</div>
-            <div class="mob-ex-title">Lat stretch on bar</div>
-            <div class="mob-ex-detail">One hand on pull-up bar, let hip drop to same side. Hold 30 sec each side × 2. Improves overhead range and squat bar position.</div>
+            <div class="mob-ex-tag">Core / lifting</div>
+            <div class="mob-ex-title">Dead bug</div>
+            <div class="mob-ex-detail">Lie on back, arms up, knees at 90°. Slowly lower opposite arm and leg toward floor without arching lower back. 8 slow reps each side. Anti-extension core work — replaces hanging knee raises for home use.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">Lifting / wrists</div>
+            <div class="mob-ex-tag">Ankles + hips / lifting</div>
+            <div class="mob-ex-title">Ankle circles + deep squat hold</div>
+            <div class="mob-ex-detail">10 slow ankle circles each direction. Then hold a deep squat, heels down, elbows pushing knees out, 60 sec. Ankle prep and hip depth combined. Critical for front squats.</div>
+          </div>
+          <div class="mob-ex">
+            <div class="mob-ex-tag">Shoulders / BJJ + KB</div>
+            <div class="mob-ex-title">KB arm bar or shoulder CARs</div>
+            <div class="mob-ex-detail">With KB: lie on back, press KB up, rotate body open and hold 30 sec each side. Without KB: slow shoulder circles through full range, 5 each direction per side. Shoulder is the most abused joint in grappling.</div>
+          </div>
+          <div class="mob-ex">
+            <div class="mob-ex-tag">Wrists / lifting + BJJ</div>
             <div class="mob-ex-title">Wrist prep circuit</div>
-            <div class="mob-ex-detail">Circles, extension holds on floor, prayer and reverse prayer. 60 sec total. Protects for bench, front rack, and BJJ gripping.</div>
+            <div class="mob-ex-detail">Circles, extension holds on floor, prayer and reverse prayer. 60 sec total. Protects for bench, pressing and BJJ grip work.</div>
           </div>
           <div class="mob-ex">
-            <div class="mob-ex-tag">Desk / neck</div>
+            <div class="mob-ex-tag">Neck / desk job</div>
             <div class="mob-ex-title">Neck release + chin tucks</div>
-            <div class="mob-ex-detail">Ear-to-shoulder 20 sec each side. Then chin tucks 10 reps. Counters forward head posture from screens and BJJ pressure.</div>
+            <div class="mob-ex-detail">Ear-to-shoulder hold 20 sec each side. Then chin tucks 10 reps. Counters forward head posture from screens and BJJ pressure passing.</div>
           </div>
         </div>
         <div class="divider"></div>
@@ -397,28 +415,6 @@
         <div class="card-title">Last 28 days</div>
         <div class="mob-streak" id="mob-streak"></div>
         <div style="font-size:11px;color:var(--hint);margin-top:8px;">Each square = one day. Amber = done.</div>
-      </div>
-    </div>
-
-    <div id="page-meal" class="page">
-      <div class="page-title">Meals & gut log</div>
-      <div class="card">
-        <div class="card-title">Meals</div>
-        <div class="form-group"><label class="form-label">Date</label><input type="date" id="meal-date" style="max-width:200px;"></div>
-        <div id="meal-slots"></div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="saveMeals()">Save meals</button></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Gut log</div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Gut feel today</label>
-            <select id="gut-feel"><option value="Good">Good — no issues</option><option value="Mild">Mild — some bloating</option><option value="Bad">Bad — significant issues</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Notes</label>
-            <input type="text" id="gut-notes" placeholder="Tried garlic today, noticed bloating...">
-          </div>
-        </div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="saveGut()">Save gut log</button></div>
       </div>
     </div>
 
@@ -717,7 +713,6 @@ function saveLiftDraft() {
     data[name] = Array.from({length: cfg.sets||3}, (_,s) => ({
       kg: document.getElementById(`e${ei}s${s}kg`)?.value || '',
       reps: document.getElementById(`e${ei}s${s}reps`)?.value || '',
-      note: document.getElementById(`e${ei}s${s}note`)?.value || '',
     }));
   });
   try { localStorage.setItem(getLiftCacheKey(), JSON.stringify(data)); } catch(e) {}
@@ -736,10 +731,8 @@ function restoreLiftDraft() {
       sets.forEach((s, si) => {
         const kg = document.getElementById(`e${ei}s${si}kg`);
         const reps = document.getElementById(`e${ei}s${si}reps`);
-        const note = document.getElementById(`e${ei}s${si}note`);
         if (kg && s.kg) kg.value = s.kg;
         if (reps && s.reps) reps.value = s.reps;
-        if (note && s.note) note.value = s.note;
       });
     });
     toast('Draft restored ✓');
@@ -748,6 +741,16 @@ function restoreLiftDraft() {
 
 function clearLiftDraft() {
   try { localStorage.removeItem(getLiftCacheKey()); } catch(e) {}
+}
+
+function fillDown(ei, totalSets, field) {
+  const firstVal = document.getElementById(`e${ei}s0${field}`)?.value;
+  if (!firstVal) return;
+  for (let s = 1; s < totalSets; s++) {
+    const el = document.getElementById(`e${ei}s${s}${field}`);
+    if (el && !el.value) el.value = firstVal;
+  }
+  saveLiftDraft();
 }
 
 async function checkAuth() {
@@ -809,27 +812,55 @@ async function renderLiftForm() {
   const session = document.getElementById('lift-session')?.value;
   if (!session) return;
   const exNames = PROGRAMMES[session] || [];
+
+  // Fetch previous session of same type for pre-population
+  let prevData = {};
+  try {
+    const { data: prev } = await sb.from('lifts')
+      .select('exercises')
+      .eq('user_id', CURRENT_USER)
+      .eq('session', session)
+      .order('date', { ascending: false })
+      .limit(1)
+      .single();
+    if (prev?.exercises) {
+      prev.exercises.forEach(ex => { prevData[ex.name] = ex.sets; });
+    }
+  } catch(e) {}
+
   document.getElementById('lift-exercises').innerHTML = exNames.map((name, ei) => {
     const cfg = EX_CONFIG[name] || {};
     const w = currentWeights[name] || { kg: 0 };
     const isBW = cfg.type === 'bw';
     const targetReps = cfg.minRep === cfg.maxRep ? `${cfg.minRep} reps` : `${cfg.minRep}–${cfg.maxRep} reps`;
+    const prev = prevData[name];
+    const prevKg = prev?.[0]?.kg || '';
+    const prevReps = prev?.[0]?.reps || '';
+    const suggestedKg = w.kg > 0 ? w.kg : (prevKg || '');
     return `<div class="ex-block">
       <div class="ex-header">
         <div class="ex-name">${name}</div>
         <div class="ex-meta">
-          ${isBW ? '' : `<span class="ex-suggested">${w.kg > 0 ? w.kg + ' kg' : 'Set weight'}</span>`}
+          ${isBW ? '' : `<span class="ex-suggested">${suggestedKg ? suggestedKg + ' kg' : 'Set weight'}</span>`}
           ${(!isBW && cfg.inc > 0) ? `<span class="ex-inc-badge">+${cfg.inc}kg on PR</span>` : ''}
           <span class="ex-target">${cfg.sets} × ${targetReps}</span>
         </div>
       </div>
-      <div class="set-header"><span>#</span><span>${isBW ? 'N/A' : 'Weight (kg)'}</span><span>Reps</span><span>Notes</span></div>
+      ${prev ? `<div style="font-size:10px;color:var(--hint);margin-bottom:6px;">Last session: ${prev.map((s,i) => `Set ${i+1}: ${s.kg||'—'}kg × ${s.reps||'—'}`).join(' · ')}</div>` : ''}
+      <div class="set-header"><span>#</span><span>${isBW ? 'N/A' : 'Weight (kg)'}</span><span>Reps</span></div>
       ${Array.from({length: cfg.sets}, (_,s) => `
         <div class="set-row">
           <span class="set-num">${s+1}</span>
-          <input type="number" step="0.5" placeholder="${isBW ? '—' : (w.kg || 'kg')}" id="e${ei}s${s}kg" ${isBW ? 'disabled style="opacity:0.3"' : ''} oninput="saveLiftDraft()">
-          <input type="number" placeholder="reps" id="e${ei}s${s}reps" oninput="saveLiftDraft()">
-          <input type="text" placeholder="optional" id="e${ei}s${s}note" oninput="saveLiftDraft()">
+          <input type="number" step="0.5"
+            placeholder="${isBW ? '—' : (prevKg || w.kg || 'kg')}"
+            id="e${ei}s${s}kg"
+            value="${isBW ? '' : (s === 0 ? '' : '')}"
+            ${isBW ? 'disabled style="opacity:0.3"' : ''}
+            oninput="saveLiftDraft();${s === 0 && !isBW ? `fillDown(${ei},${cfg.sets},'kg')` : ''}">
+          <input type="number"
+            placeholder="${prevReps || 'reps'}"
+            id="e${ei}s${s}reps"
+            oninput="saveLiftDraft();${s === 0 ? `fillDown(${ei},${cfg.sets},'reps')` : ''}">
         </div>`).join('')}
     </div>`;
   }).join('');
@@ -847,7 +878,6 @@ async function saveLift() {
     return { name, sets: Array.from({length: cfg.sets||3}, (_,s) => ({
       kg: document.getElementById(`e${ei}s${s}kg`)?.value || '',
       reps: document.getElementById(`e${ei}s${s}reps`)?.value || '',
-      note: document.getElementById(`e${ei}s${s}note`)?.value || '',
     }))};
   });
   const { error } = await sb.from('lifts').insert({ date, session, exercises, feel, user_id: CURRENT_USER });
@@ -1043,19 +1073,15 @@ async function renderDashboard() {
 }
 
 async function renderHistory() {
-  const [{ data: lifts },{ data: bjj },{ data: meals },{ data: gut },{ data: bw },{ data: mob }] = await Promise.all([
+  const [{ data: lifts },{ data: bjj },{ data: bw },{ data: mob }] = await Promise.all([
     sb.from('lifts').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
     sb.from('bjj').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
-    sb.from('meals').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
-    sb.from('gut_log').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
     sb.from('bodyweight').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
     sb.from('mobility_log').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
   ]);
   const all = [
     ...(lifts||[]).map(l=>({...l,kind:'lift'})),
     ...(bjj||[]).map(l=>({...l,kind:'bjj'})),
-    ...(meals||[]).map(l=>({...l,kind:'meal'})),
-    ...(gut||[]).map(l=>({...l,kind:'gut'})),
     ...(bw||[]).map(l=>({...l,kind:'weight'})),
     ...(mob||[]).map(l=>({...l,kind:'mob'})),
   ].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,50);
@@ -1065,8 +1091,6 @@ async function renderHistory() {
     let badge, detail;
     if (l.kind==='lift') { badge='<span class="badge badge-lift">Lift</span>'; detail=`${l.session} · ${l.feel||''}`; }
     else if (l.kind==='bjj') { badge='<span class="badge badge-bjj">BJJ</span>'; detail=`${l.type} · ${l.duration_min}min · ${l.energy}${l.notes?' · '+l.notes:''}`; }
-    else if (l.kind==='meal') { badge='<span class="badge badge-meal">Meals</span>'; detail=`${(l.meals||[]).filter(m=>m.eaten==='yes').length}/${(l.meals||[]).length} slots eaten`; }
-    else if (l.kind==='gut') { const gc=l.feel==='Good'?'good':l.feel==='Mild'?'mild':'bad'; badge=`<span class="badge badge-gut-${gc}">Gut</span>`; detail=`${l.feel}${l.notes?' · '+l.notes:''}`; }
     else if (l.kind==='weight') { badge='<span class="badge badge-weight">Weight</span>'; detail=`${parseFloat(l.weight_kg).toFixed(1)}kg · ${l.time_of_day}`; }
     else { badge='<span class="badge badge-mob">Mobility</span>'; detail=`${l.duration_min}min${l.notes?' · '+l.notes:''}`; }
     return `<div class="log-row"><div class="log-date">${l.date}<br><br>${badge}</div><div><div style="font-size:13px;color:var(--text)">${detail}</div></div></div>`;
@@ -1205,8 +1229,6 @@ async function clearAll() {
   await Promise.all([
     sb.from('lifts').delete().eq('user_id',CURRENT_USER),
     sb.from('bjj').delete().eq('user_id',CURRENT_USER),
-    sb.from('meals').delete().eq('user_id',CURRENT_USER),
-    sb.from('gut_log').delete().eq('user_id',CURRENT_USER),
     sb.from('bodyweight').delete().eq('user_id',CURRENT_USER),
     sb.from('mobility_log').delete().eq('user_id',CURRENT_USER),
     sb.from('exercise_weights').delete().eq('user_id',CURRENT_USER),
@@ -1218,7 +1240,7 @@ async function clearAll() {
 
 async function init() {
   const t = today();
-  ['lift-date','bjj-date','mob-date','meal-date','bw-date','meas-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=t; });
+  ['lift-date','bjj-date','mob-date','bw-date','meas-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=t; });
   const hr = new Date().getHours();
   const note = document.getElementById('lift-5am-note');
   if (hr < 7) note.style.display = 'block';
