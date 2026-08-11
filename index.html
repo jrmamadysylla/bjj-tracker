@@ -13,192 +13,19 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
   }
 </script>
-<style>
-  :root {
-    --bg: #0e0e0e; --surface: #161616; --surface2: #1f1f1f;
-    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-    --text: #f0f0f0; --muted: #888; --hint: #555;
-    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.12);
-    --teal: #34d399; --teal-dim: rgba(52,211,153,0.12);
-    --amber: #fbbf24; --amber-dim: rgba(251,191,36,0.10);
-    --blue: #60a5fa; --blue-dim: rgba(96,165,250,0.10);
-    --red: #f87171; --radius: 10px; --radius-sm: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
-  #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-  .auth-box { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 2.5rem 2rem; width: 100%; max-width: 340px; }
-  .auth-logo { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--purple); letter-spacing: 0.05em; margin-bottom: 0.4rem; }
-  .auth-sub { font-size: 12px; color: var(--hint); margin-bottom: 1.75rem; }
-  .auth-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 16px; }
-  .layout { display: grid; grid-template-columns: 210px 1fr; min-height: 100vh; }
-  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-  .sidebar-logo { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--purple); letter-spacing: 0.05em; padding: 0 0.5rem 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
-  .sidebar-logo span { color: var(--muted); display: block; font-size: 10px; margin-top: 2px; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
-  .nav-item:hover { color: var(--text); background: var(--surface2); }
-  .nav-item.active { color: var(--text); background: var(--purple-dim); }
-  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
-  .sidebar-section { font-size: 10px; color: var(--hint); letter-spacing: 0.1em; text-transform: uppercase; padding: 1rem 0.5rem 0.4rem; }
-  .main { padding: 2rem 2.5rem; max-width: 900px; }
-  .page { display: none; }
-  .page.active { display: block; }
-  .page-title { font-size: 20px; font-weight: 500; margin-bottom: 1.5rem; }
-  .page-title span { color: var(--muted); font-weight: 300; font-size: 14px; margin-left: 8px; }
-  .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1.25rem; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
-  .stat-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
-  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
-  .card-title { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
-  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-  .wk-day { background: var(--surface2); border-radius: var(--radius-sm); padding: 8px 4px; text-align: center; }
-  .wk-day.today { border: 1px solid var(--purple); }
-  .wk-label { font-size: 10px; color: var(--hint); margin-bottom: 6px; }
-  .wk-dots { display: flex; justify-content: center; gap: 3px; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border2); }
-  .dot.lift { background: var(--purple); border-color: var(--purple); }
-  .dot.bjj { background: var(--teal); border-color: var(--teal); }
-  .dot.mob { background: var(--amber); border-color: var(--amber); }
-  .pr-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .pr-row:last-child { border-bottom: none; }
-  .pr-name { min-width: 180px; color: var(--text); }
-  .pr-bar-wrap { flex: 1; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
-  .pr-bar { height: 3px; background: var(--purple); border-radius: 2px; }
-  .pr-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--purple); min-width: 60px; text-align: right; }
-  .weight-chart { display: flex; align-items: flex-end; gap: 6px; height: 90px; }
-  .wbar-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
-  .wbar { width: 100%; border-radius: 3px 3px 0 0; background: var(--teal); min-height: 3px; opacity: 0.8; }
-  .wbar-val { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 3px; }
-  .wbar-lbl { font-size: 9px; color: var(--hint); margin-top: 3px; }
-  .form-group { margin-bottom: 14px; }
-  .form-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; display: block; }
-  input[type=text], input[type=number], input[type=date], input[type=password], select, textarea { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 12px; width: 100%; outline: none; transition: border 0.15s; }
-  input:focus, select:focus, textarea:focus { border-color: var(--purple); }
-  select option { background: var(--surface2); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .ex-block { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; }
-  .ex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
-  .ex-name { font-size: 13px; font-weight: 500; color: var(--text); }
-  .ex-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .ex-target { font-size: 11px; color: var(--hint); }
-  .ex-suggested { font-size: 11px; color: var(--purple); background: var(--purple-dim); padding: 2px 8px; border-radius: 20px; }
-  .ex-inc-badge { font-size: 10px; color: var(--teal); background: var(--teal-dim); padding: 2px 7px; border-radius: 20px; }
-  .set-header { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 6px; font-size: 10px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; padding: 0 2px; }
-  .set-row { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 6px; margin-bottom: 4px; align-items: center; }
-  .set-num { font-size: 11px; color: var(--hint); text-align: center; }
-  .set-row input { padding: 6px 8px; }
-  .btn { padding: 9px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
-  .btn:hover { background: var(--surface2); color: var(--text); }
-  .btn-primary { background: var(--purple); color: #0e0e0e; border-color: var(--purple); font-weight: 500; }
-  .btn-primary:hover { opacity: 0.88; background: var(--purple); }
-  .btn-teal { background: var(--teal); color: #0e0e0e; border-color: var(--teal); font-weight: 500; }
-  .btn-teal:hover { opacity: 0.88; background: var(--teal); }
-  .btn-danger { color: var(--red); border-color: rgba(248,113,113,0.3); }
-  .btn-danger:hover { background: rgba(248,113,113,0.08); }
-  .btn-sm { padding: 5px 12px; font-size: 12px; }
-  .btn-row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
-  .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; display: inline-block; }
-  .badge-lift { background: var(--purple-dim); color: var(--purple); }
-  .badge-bjj { background: var(--teal-dim); color: var(--teal); }
-  .badge-meal { background: var(--amber-dim); color: var(--amber); }
-  .badge-weight { background: var(--blue-dim); color: var(--blue); }
-  .badge-mob { background: var(--amber-dim); color: var(--amber); }
-  .badge-gut-good { background: var(--teal-dim); color: var(--teal); }
-  .badge-gut-mild { background: var(--amber-dim); color: var(--amber); }
-  .badge-gut-bad { background: rgba(248,113,113,0.1); color: var(--red); }
-  .log-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .log-row:last-child { border-bottom: none; }
-  .log-date { color: var(--hint); font-family: 'DM Mono', monospace; font-size: 11px; }
-  .meal-slot { display: grid; grid-template-columns: 150px 1fr 100px; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .meal-slot-label { font-size: 12px; color: var(--muted); }
-  .mob-routine { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
-  .mob-ex { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; }
-  .mob-ex-tag { font-size: 10px; color: var(--amber); background: var(--amber-dim); padding: 1px 7px; border-radius: 20px; display: inline-block; margin-bottom: 6px; }
-  .mob-ex-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-  .mob-ex-detail { font-size: 12px; color: var(--muted); line-height: 1.5; }
-  .mob-streak { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
-  .mob-dot { width: 10px; height: 10px; border-radius: 2px; background: var(--surface2); border: 1px solid var(--border2); }
-  .mob-dot.done { background: var(--amber); border-color: var(--amber); }
-  .po-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .po-table th { font-size: 10px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.07em; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
-  .po-table td { padding: 8px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
-  .po-table tr:last-child td { border-bottom: none; }
-  .po-inc { color: var(--teal); font-family: 'DM Mono', monospace; font-size: 12px; }
-  .po-weight { font-family: 'DM Mono', monospace; color: var(--purple); }
-  .empty { text-align: center; padding: 2rem; color: var(--hint); font-size: 13px; }
-  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--border2); color: var(--text); padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 100; font-family: 'DM Sans', sans-serif; }
-  .toast.show { opacity: 1; }
-  .toast.error { border-color: rgba(248,113,113,0.4); color: var(--red); }
-  .loading { color: var(--hint); font-size: 13px; padding: 1rem 0; }
-  .info { background: var(--teal-dim); border-left: 2px solid var(--teal); padding: 10px 14px; font-size: 12px; color: var(--teal); margin-bottom: 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; line-height: 1.6; }
-  .warn { background: var(--amber-dim); border-left: 2px solid var(--amber); padding: 10px 14px; font-size: 12px; color: var(--amber); margin-bottom: 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; line-height: 1.6; }
-  .legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
-  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .divider { height: 1px; background: var(--border); margin: 1rem 0; }
-  @media (max-width: 700px) {
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 0.75rem; }
-    .sidebar-logo, .sidebar-section { display: none; }
-    .main { padding: 1rem; }
-    .stat-grid { grid-template-columns: repeat(3, 1fr); }
-    .form-row, .form-row-3 { grid-template-columns: 1fr; }
-    .meal-slot { grid-template-columns: 1fr; }
-    .mob-routine { grid-template-columns: 1fr; }
-    .set-header, .set-row { grid-template-columns: 28px 1fr 1fr; }
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .main { padding: 1rem 1rem 5rem; }
-    .bottom-nav { display: flex; }
-    .stat-grid { grid-template-columns: repeat(3, 1fr); }
-  }
-  .bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-    z-index: 50;
-    justify-content: space-around;
-  }
-  .bn-item {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 3px; padding: 4px 8px; cursor: pointer;
-    border: none; background: none; font-family: 'DM Sans', sans-serif;
-    color: var(--hint); font-size: 10px; min-width: 48px;
-  }
-  .bn-item.active { color: var(--purple); }
-  .bn-icon { font-size: 18px; line-height: 1; }
-  .more-menu {
-    display: none; position: fixed; bottom: 60px; right: 0; left: 0;
-    background: var(--surface); border-top: 1px solid var(--border);
-    padding: 0.75rem; z-index: 49; flex-direction: column; gap: 4px;
-  }
-  .more-menu.open { display: flex; }
-  .more-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: var(--radius-sm);
-    border: none; background: none; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; color: var(--muted); cursor: pointer; text-align: left;
-  }
-  .more-item.active { color: var(--text); background: var(--purple-dim); }
-  .more-item:hover { background: var(--surface2); color: var(--text); }
-</style>
 </head>
 <body>
+
 <div class="toast" id="toast"></div>
 
+<!-- ── AUTH ─────────────────────────────────────────────────────────────── -->
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">BJJ/BULK TRACKER</div>
@@ -212,36 +39,41 @@
   </div>
 </div>
 
+<!-- ── APP ──────────────────────────────────────────────────────────────── -->
 <div class="layout" id="app" style="display:none;">
+
   <!-- Bottom nav (mobile only) -->
   <nav class="bottom-nav" id="bottom-nav">
-    <button class="bn-item active" id="bn-dashboard" onclick="nav('dashboard',this);closeMobileNav()">
+    <button class="bn-item active" id="bn-dashboard" onclick="nav('dashboard',this)">
       <span class="bn-icon">◈</span><span>Home</span>
     </button>
-    <button class="bn-item" id="bn-lift" onclick="nav('lift',this);closeMobileNav()">
+    <button class="bn-item" id="bn-lift" onclick="nav('lift',this)">
       <span class="bn-icon">↑</span><span>Lift</span>
     </button>
-    <button class="bn-item" id="bn-bjj" onclick="nav('bjj',this);closeMobileNav()">
+    <button class="bn-item" id="bn-bjj" onclick="nav('bjj',this)">
       <span class="bn-icon">◎</span><span>BJJ</span>
     </button>
-    <button class="bn-item" id="bn-mobility" onclick="nav('mobility',this);closeMobileNav()">
+    <button class="bn-item" id="bn-mobility" onclick="nav('mobility',this)">
       <span class="bn-icon">◇</span><span>Mobility</span>
     </button>
     <button class="bn-item" id="bn-more" onclick="toggleMoreMenu()">
       <span class="bn-icon">≡</span><span>More</span>
     </button>
   </nav>
+
   <!-- More menu (mobile) -->
   <div class="more-menu" id="more-menu">
-    <button class="more-item" onclick="nav('weight',this);closeMobileNav()"><span>▷</span> Bodyweight</button>
-    <button class="more-item" onclick="nav('measurements',this);closeMobileNav()"><span>◉</span> Measurements</button>
-    <button class="more-item" onclick="nav('overload',this);closeMobileNav()"><span>↗</span> Progression</button>
-    <button class="more-item" onclick="nav('history',this);closeMobileNav()"><span>≡</span> History</button>
-    <button class="more-item" onclick="nav('export',this);closeMobileNav()"><span>⊠</span> Export</button>
-    <button class="more-item" onclick="nav('programme',this);closeMobileNav()"><span>⊞</span> Programme</button>
+    <button class="more-item" onclick="nav('weight',this)"><span>▷</span> Bodyweight</button>
+    <button class="more-item" onclick="nav('measurements',this)"><span>◉</span> Measurements</button>
+    <button class="more-item" onclick="nav('overload',this)"><span>↗</span> Progression</button>
+    <button class="more-item" onclick="nav('history',this)"><span>≡</span> History</button>
+    <button class="more-item" onclick="nav('export',this)"><span>⊠</span> Export</button>
+    <button class="more-item" onclick="nav('programme',this)"><span>⊞</span> Programme</button>
   </div>
+
+  <!-- Sidebar (desktop only) -->
   <nav class="sidebar">
-    <div class="sidebar-logo">BJJ/BULK<span>TRACKER v2</span></div>
+    <div class="sidebar-logo">BJJ/BULK<span>TRACKER</span></div>
     <div class="sidebar-section">Overview</div>
     <button class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">◈</span> Dashboard</button>
     <div class="sidebar-section">Log</div>
@@ -260,8 +92,10 @@
 
   <main class="main">
 
+    <!-- ── DASHBOARD ──────────────────────────────────────────────────────── -->
     <div id="page-dashboard" class="page active">
       <div class="page-title">Dashboard <span id="dash-date"></span></div>
+      <div id="quick-log-wrap"></div>
       <div class="stat-grid">
         <div class="stat"><div class="stat-val" id="s-lifts">—</div><div class="stat-lbl">Lifts this week</div></div>
         <div class="stat"><div class="stat-val" id="s-bjj">—</div><div class="stat-lbl">BJJ sessions</div></div>
@@ -288,6 +122,7 @@
       </div>
     </div>
 
+    <!-- ── LIFT ───────────────────────────────────────────────────────────── -->
     <div id="page-lift" class="page">
       <div class="page-title">Log lift session</div>
       <div class="info" id="lift-5am-note" style="display:none;">5am session — let's go 💪</div>
@@ -295,26 +130,22 @@
         <div class="form-row">
           <div class="form-group"><label class="form-label">Date</label><input type="date" id="lift-date"></div>
           <div class="form-group"><label class="form-label">Session</label>
-            <select id="lift-session" onchange="renderLiftForm()">
-              <option value="Upper A">Upper A — strength</option>
-              <option value="Upper B">Upper B — volume</option>
-              <option value="Lower A">Lower A — strength</option>
-              <option value="Lower B">Lower B — volume</option>
-            </select>
+            <select id="lift-session" onchange="renderLiftForm()"></select>
           </div>
         </div>
-        <div class="form-group"><label class="form-label">Overall feeling</label>
+        <div class="form-group"><label class="form-label">Feeling</label>
           <select id="lift-feel"><option value="Strong">Strong</option><option value="Average">Average</option><option value="Tired">Tired</option></select>
         </div>
         <div id="lift-exercises"></div>
         <div id="overload-alerts"></div>
         <div class="btn-row">
           <button class="btn btn-primary" onclick="saveLift()">Save session</button>
-          <button class="btn" onclick="renderLiftForm()">Reset form</button>
+          <button class="btn" onclick="renderLiftForm()">Reset</button>
         </div>
       </div>
     </div>
 
+    <!-- ── BJJ ────────────────────────────────────────────────────────────── -->
     <div id="page-bjj" class="page">
       <div class="page-title">Log BJJ session</div>
       <div class="card">
@@ -326,89 +157,40 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Duration (min)</label><input type="number" id="bjj-dur" value="60" min="1"></div>
-          <div class="form-group"><label class="form-label">Energy level</label>
+          <div class="form-group"><label class="form-label">Energy</label>
             <select id="bjj-energy"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
           </div>
         </div>
         <div class="form-group"><label class="form-label">Notes</label>
-          <input type="text" id="bjj-notes" placeholder="Worked on guard passing, drilled triangles...">
+          <input type="text" id="bjj-notes" placeholder="Worked on guard passing...">
         </div>
         <div class="btn-row"><button class="btn btn-primary" onclick="saveBJJ()">Save session</button></div>
       </div>
     </div>
 
+    <!-- ── MOBILITY ───────────────────────────────────────────────────────── -->
     <div id="page-mobility" class="page">
       <div class="page-title">Daily mobility <span>15 min</span></div>
-      <div class="warn">Mat, kettlebell and belt only. No bar needed. Based on BJJ-specific research — prioritises hip CARs, 90/90, frog stretch and thoracic work which consistently show up as highest impact for grapplers.</div>
+      <div class="warn">Mat, kettlebell and belt only. No bar needed. Based on BJJ-specific research — hip CARs, 90/90, frog stretch and thoracic work are the highest-impact exercises for grapplers.</div>
       <div class="card">
         <div class="card-title">Today's routine</div>
         <div class="mob-routine">
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Hips / BJJ</div>
-            <div class="mob-ex-title">Hip CARs</div>
-            <div class="mob-ex-detail">On all fours, brace core. Lift one knee and slowly circle through full range — forward, out, back, down. 5 slow reps each direction, each side. Trains active hip control for guard retention and escapes.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Hips / desk job</div>
-            <div class="mob-ex-title">90/90 hip stretch</div>
-            <div class="mob-ex-detail">Front and back leg at 90°. Lean forward over front shin, hold 45 sec each side × 2. Most important stretch for guard depth and desk hip flexors.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Hips / BJJ</div>
-            <div class="mob-ex-title">Frog stretch</div>
-            <div class="mob-ex-detail">On all fours, slide knees wide until you feel inner thigh stretch. Sink hips back slowly, hold 45 sec × 2. Increases hip external rotation — directly relevant to side control, guard and passing.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Hips / BJJ + KB</div>
-            <div class="mob-ex-title">Cossack squat</div>
-            <div class="mob-ex-detail">Wide stance, shift weight into one leg, sink into deep lateral lunge, other leg straight. 8 slow reps each side. Hold KB at chest for more depth. Best single exercise for BJJ hip mobility — covers passing, scrambles and single legs.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Thoracic / desk + BJJ</div>
-            <div class="mob-ex-title">Thread the needle</div>
-            <div class="mob-ex-detail">On all fours, slide one arm under body and rotate open. Hold 30 sec each side × 2. Undoes desk and BJJ top position hunching. Opens shoulder internal rotation for escapes and frames.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Thoracic / BJJ</div>
-            <div class="mob-ex-title">Thoracic rotation (seated)</div>
-            <div class="mob-ex-detail">Sit cross-legged, hands behind head. Rotate slowly each direction, 10 reps × 2. Works thoracic extension — keeps your pressure driving down into your opponent.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Hamstrings / BJJ + belt</div>
-            <div class="mob-ex-title">Lying hamstring stretch with belt</div>
-            <div class="mob-ex-detail">Lie on back, loop your BJJ belt around one foot, straighten leg and pull toward you. Hold 45 sec each side. Essential for guard play and hip escapes when stacked.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Core / lifting</div>
-            <div class="mob-ex-title">Dead bug</div>
-            <div class="mob-ex-detail">Lie on back, arms up, knees at 90°. Slowly lower opposite arm and leg toward floor without arching lower back. 8 slow reps each side. Anti-extension core work — replaces hanging knee raises for home use.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Ankles + hips / lifting</div>
-            <div class="mob-ex-title">Ankle circles + deep squat hold</div>
-            <div class="mob-ex-detail">10 slow ankle circles each direction. Then hold a deep squat, heels down, elbows pushing knees out, 60 sec. Ankle prep and hip depth combined. Critical for front squats.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Shoulders / BJJ + KB</div>
-            <div class="mob-ex-title">KB arm bar or shoulder CARs</div>
-            <div class="mob-ex-detail">With KB: lie on back, press KB up, rotate body open and hold 30 sec each side. Without KB: slow shoulder circles through full range, 5 each direction per side. Shoulder is the most abused joint in grappling.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Wrists / lifting + BJJ</div>
-            <div class="mob-ex-title">Wrist prep circuit</div>
-            <div class="mob-ex-detail">Circles, extension holds on floor, prayer and reverse prayer. 60 sec total. Protects for bench, pressing and BJJ grip work.</div>
-          </div>
-          <div class="mob-ex">
-            <div class="mob-ex-tag">Neck / desk job</div>
-            <div class="mob-ex-title">Neck release + chin tucks</div>
-            <div class="mob-ex-detail">Ear-to-shoulder hold 20 sec each side. Then chin tucks 10 reps. Counters forward head posture from screens and BJJ pressure passing.</div>
-          </div>
+          <div class="mob-ex"><div class="mob-ex-tag">Hips / BJJ</div><div class="mob-ex-title">Hip CARs</div><div class="mob-ex-detail">On all fours, brace core. Lift one knee and slowly circle through full range — forward, out, back, down. 5 slow reps each direction, each side. Trains active hip control for guard retention and escapes.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Hips / desk job</div><div class="mob-ex-title">90/90 hip stretch</div><div class="mob-ex-detail">Front and back leg at 90°. Lean forward over front shin, hold 45 sec each side × 2. Most important stretch for guard depth and desk hip flexors.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Hips / BJJ</div><div class="mob-ex-title">Frog stretch</div><div class="mob-ex-detail">On all fours, slide knees wide. Sink hips back slowly, hold 45 sec × 2. Increases hip external rotation — directly relevant to side control, guard and passing.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Hips / BJJ + KB</div><div class="mob-ex-title">Cossack squat</div><div class="mob-ex-detail">Wide stance, shift into one leg, sink into deep lateral lunge. 8 slow reps each side. Hold KB at chest for depth. Best single exercise for BJJ hip mobility.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Thoracic / desk + BJJ</div><div class="mob-ex-title">Thread the needle</div><div class="mob-ex-detail">On all fours, slide one arm under body and rotate open. Hold 30 sec each side × 2. Undoes desk and BJJ top position hunching. Opens shoulder internal rotation.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Thoracic / BJJ</div><div class="mob-ex-title">Thoracic rotation (seated)</div><div class="mob-ex-detail">Sit cross-legged, hands behind head. Rotate slowly each direction, 10 reps × 2. Keeps your pressure driving down into your opponent.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Hamstrings / belt</div><div class="mob-ex-title">Lying hamstring stretch</div><div class="mob-ex-detail">Lie on back, loop BJJ belt around one foot, pull leg toward you. Hold 45 sec each side. Essential for guard play and hip escapes when stacked.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Core / lifting</div><div class="mob-ex-title">Dead bug</div><div class="mob-ex-detail">Lie on back, arms up, knees at 90°. Lower opposite arm and leg without arching lower back. 8 slow reps each side. Anti-extension core work.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Ankles + hips</div><div class="mob-ex-title">Ankle circles + squat hold</div><div class="mob-ex-detail">10 slow ankle circles each direction. Then deep squat hold, heels down, elbows pushing knees out, 60 sec. Ankle prep and hip depth combined.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Shoulders / KB</div><div class="mob-ex-title">KB arm bar or shoulder CARs</div><div class="mob-ex-detail">With KB: lie on back, press KB up, rotate open 30 sec each side. Without KB: slow shoulder circles, 5 each direction per side. Most abused joint in grappling.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Wrists / lifting + BJJ</div><div class="mob-ex-title">Wrist prep circuit</div><div class="mob-ex-detail">Circles, extension holds on floor, prayer and reverse prayer. 60 sec total. Protects for bench, pressing and BJJ gripping.</div></div>
+          <div class="mob-ex"><div class="mob-ex-tag">Neck / desk job</div><div class="mob-ex-title">Neck release + chin tucks</div><div class="mob-ex-detail">Ear-to-shoulder hold 20 sec each side. Then chin tucks 10 reps. Counters forward head posture from screens and BJJ pressure passing.</div></div>
         </div>
         <div class="divider"></div>
         <div class="form-group"><label class="form-label">Date</label><input type="date" id="mob-date" style="max-width:200px;"></div>
-        <div class="form-group"><label class="form-label">Notes (optional)</label>
-          <input type="text" id="mob-notes" placeholder="Tight left hip today...">
-        </div>
+        <div class="form-group"><label class="form-label">Notes (optional)</label><input type="text" id="mob-notes" placeholder="Tight left hip today..."></div>
         <div class="btn-row"><button class="btn btn-teal" onclick="saveMobility()">✓ Mark complete</button></div>
       </div>
       <div class="card">
@@ -418,6 +200,7 @@
       </div>
     </div>
 
+    <!-- ── BODYWEIGHT ─────────────────────────────────────────────────────── -->
     <div id="page-weight" class="page">
       <div class="page-title">Bodyweight</div>
       <div class="card">
@@ -436,36 +219,10 @@
       </div>
     </div>
 
-    <div id="page-overload" class="page">
-      <div class="page-title">Progressive overload</div>
-      <div class="info">When you hit the top of the rep range across all sets, weight increases automatically for your next session. Barbell: +2.5kg · DB: +2kg · Cables & machines: +2.5kg · Bodyweight exercises: reps only.</div>
-      <div class="card">
-        <div class="card-title">Current working weights</div>
-        <div id="po-table-wrap"><div class="loading">Loading...</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Manual override <span style="font-size:11px;color:var(--hint);font-weight:400;text-transform:none;letter-spacing:0;">use to set starting weights or correct an entry</span></div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Exercise</label><select id="override-ex"></select></div>
-          <div class="form-group"><label class="form-label">New weight (kg)</label><input type="number" id="override-kg" step="0.5" placeholder="60"></div>
-        </div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="overrideWeight()">Update weight</button></div>
-      </div>
-    </div>
-
-    <div id="page-history" class="page">
-      <div class="page-title">History</div>
-      <div class="card">
-        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
-          All logs <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete ALL data? Cannot be undone.')) clearAll()">Clear all</button>
-        </div>
-        <div id="history-list"><div class="loading">Loading...</div></div>
-      </div>
-    </div>
-
+    <!-- ── MEASUREMENTS ───────────────────────────────────────────────────── -->
     <div id="page-measurements" class="page">
       <div class="page-title">Measurements <span>cm</span></div>
-      <div class="info">Log every 2–4 weeks, same time of day, relaxed (not flexed). This is your physique check-in data — export it with your photos for AI analysis.</div>
+      <div class="info">Log every 2–4 weeks, relaxed not flexed. Use the export page to generate a summary for your physique check-in with Claude.</div>
       <div class="card">
         <div class="card-title">Log check-in</div>
         <div class="form-group"><label class="form-label">Date</label><input type="date" id="meas-date" style="max-width:200px;"></div>
@@ -493,9 +250,7 @@
           <div class="form-group"><label class="form-label">Left calf (cm)</label><input type="number" id="m-calf-l" step="0.5" placeholder="36"></div>
           <div class="form-group"><label class="form-label">Right calf (cm)</label><input type="number" id="m-calf-r" step="0.5" placeholder="36"></div>
         </div>
-        <div class="form-group" style="margin-top:8px;"><label class="form-label">Notes</label>
-          <input type="text" id="m-notes" placeholder="Feeling leaner, arms looking fuller...">
-        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input type="text" id="m-notes" placeholder="Feeling leaner, arms fuller..."></div>
         <div class="btn-row"><button class="btn btn-primary" onclick="saveMeasurements()">Save check-in</button></div>
       </div>
       <div class="card">
@@ -504,31 +259,60 @@
       </div>
     </div>
 
-    <div id="page-export" class="page">
-      <div class="page-title">Export <span>for physique analysis</span></div>
-      <div class="info">Generate a text summary to paste into a Claude chat alongside your progression photos. Update the HRV and resting HR manually from your Apple Watch Health app.</div>
+    <!-- ── PROGRESSION ────────────────────────────────────────────────────── -->
+    <div id="page-overload" class="page">
+      <div class="page-title">Progressive overload</div>
+      <div class="info">When you hit the top of the rep range across all sets, weight increases automatically next session. Barbell +2.5kg · DB +2kg · Cable/machine +2.5kg · Bodyweight: reps only.</div>
       <div class="card">
-        <div class="card-title">Apple Watch stats <span style="font-size:11px;color:var(--hint);font-weight:400;text-transform:none;letter-spacing:0;">enter manually from Health app</span></div>
+        <div class="card-title">Current working weights</div>
+        <div id="po-table-wrap"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Manual override</div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">Avg HRV (ms)</label><input type="number" id="exp-hrv" placeholder="58" step="1"></div>
-          <div class="form-group"><label class="form-label">Resting HR (bpm)</label><input type="number" id="exp-rhr" placeholder="54" step="1"></div>
+          <div class="form-group"><label class="form-label">Exercise</label><select id="override-ex"></select></div>
+          <div class="form-group"><label class="form-label">New weight (kg)</label><input type="number" id="override-kg" step="0.5" placeholder="60"></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="overrideWeight()">Update weight</button></div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY ────────────────────────────────────────────────────────── -->
+    <div id="page-history" class="page">
+      <div class="page-title">History</div>
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          All logs <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete ALL data?')) clearAll()">Clear all</button>
+        </div>
+        <div id="history-list"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ── EXPORT ─────────────────────────────────────────────────────────── -->
+    <div id="page-export" class="page">
+      <div class="page-title">Export <span>physique analysis</span></div>
+      <div class="info">Generate a text summary to paste into Claude alongside your progression photos.</div>
+      <div class="card">
+        <div class="card-title">Apple Watch stats <span style="font-size:11px;color:var(--hint);font-weight:400;text-transform:none;letter-spacing:0;">from Health app</span></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Avg HRV (ms)</label><input type="number" id="exp-hrv" placeholder="58"></div>
+          <div class="form-group"><label class="form-label">Resting HR (bpm)</label><input type="number" id="exp-rhr" placeholder="54"></div>
         </div>
       </div>
       <div class="card">
         <div class="card-title">Generate export</div>
-        <div class="btn-row" style="margin-top:0;">
-          <button class="btn btn-primary" onclick="generateExport()">Generate summary</button>
-        </div>
+        <div class="btn-row" style="margin-top:0;"><button class="btn btn-primary" onclick="generateExport()">Generate summary</button></div>
         <div id="export-output" style="display:none;margin-top:1rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <span style="font-size:12px;color:var(--muted);">Copy and paste into Claude with your photos</span>
             <button class="btn btn-sm" onclick="copyExport()">Copy</button>
           </div>
-          <textarea id="export-text" style="width:100%;min-height:320px;font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);padding:12px;resize:vertical;line-height:1.6;" readonly></textarea>
+          <textarea id="export-text" style="width:100%;min-height:280px;font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);padding:12px;resize:vertical;line-height:1.6;" readonly></textarea>
         </div>
       </div>
     </div>
 
+    <!-- ── PROGRAMME ──────────────────────────────────────────────────────── -->
     <div id="page-programme" class="page">
       <div class="page-title">Programme <span id="prog-current-label"></span></div>
       <div class="info">Each user has their own programme. Changing this updates your session dropdown and progression tracking.</div>
@@ -536,11 +320,11 @@
         <div class="card-title">Select your programme</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;border:1px solid var(--border2);" onclick="saveUserProgramme('fighters')" id="prog-fighters">
-            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Fighters — Strength & Mass</div>
-            <div style="font-size:12px;color:var(--muted);">3 days · Upper / Lower / Full body hypertrophy · Built for BJJ recovery</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;">Fighters — Strength & Mass</div>
+            <div style="font-size:12px;color:var(--muted);">3 days · Upper / Lower / Full body · Built for BJJ recovery</div>
           </div>
           <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;border:1px solid var(--border2);" onclick="saveUserProgramme('upper_lower')" id="prog-upper_lower">
-            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Upper / Lower — Strength & Aesthetics</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;">Upper / Lower — Strength & Aesthetics</div>
             <div style="font-size:12px;color:var(--muted);">4 days · Upper A & B / Lower A & B · Classic physique focus</div>
           </div>
         </div>
@@ -550,715 +334,17 @@
   </main>
 </div>
 
-<script>
-const SUPABASE_URL = 'https://jimlyjqhccplbsjbveff.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Vlaf075-sPY0nMc2J5x73w_uLEI-JeB';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!-- ── JS MODULES (order matters) ────────────────────────────────────────── -->
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/programmes.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/lift.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/log.js"></script>
+<script src="js/review.js"></script>
+<script src="js/init.js"></script>
 
-// ── FIGHTERS PROGRAMME (Thiago Caldas — msylla) ──────────────────────────────
-const EX_CONFIG_FIGHTERS = {
-  // Day 1 — Upper
-  'Bench press':                  { sets:4, minRep:3,  maxRep:5,  inc:2.5, type:'barbell' },
-  'Weighted dip':                 { sets:4, minRep:6,  maxRep:8,  inc:2,   type:'bw'      },
-  'Pull-up':                      { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'bw'      },
-  'Chest-supported row':          { sets:4, minRep:8,  maxRep:10, inc:2.5, type:'machine' },
-  'Lateral raise':                { sets:3, minRep:12, maxRep:20, inc:2,   type:'db'      },
-  'Curl variation':               { sets:3, minRep:10, maxRep:15, inc:2,   type:'db'      },
-  'Overhead tricep extension':    { sets:3, minRep:10, maxRep:15, inc:2,   type:'db'      },
-  'Face pulls (accessory)':       { sets:3, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
-  // Day 2 — Lower
-  'Front squat':                  { sets:4, minRep:3,  maxRep:5,  inc:2.5, type:'barbell' },
-  'Stiff-leg deadlift':           { sets:4, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Bulgarian split squat':        { sets:3, minRep:8,  maxRep:12, inc:2,   type:'db'      },
-  'Leg extension':                { sets:3, minRep:8,  maxRep:10, inc:2.5, type:'machine' },
-  'Weighted plank / ab wheel':    { sets:3, minRep:8,  maxRep:15, inc:0,   type:'bw'      },
-  // Day 3 — Full body hypertrophy
-  'Deadlift':                     { sets:3, minRep:8,  maxRep:10, inc:2.5, type:'barbell' },
-  'Incline press':                { sets:3, minRep:8,  maxRep:10, inc:2,   type:'db'      },
-  'Pull-up variation':            { sets:3, minRep:10, maxRep:12, inc:2.5, type:'bw'      },
-  'Hip thrust':                   { sets:3, minRep:8,  maxRep:10, inc:2.5, type:'barbell' },
-  'Lateral raise (D3)':           { sets:3, minRep:12, maxRep:20, inc:2,   type:'db'      },
-  'DB hammer curl':               { sets:3, minRep:10, maxRep:15, inc:2,   type:'db'      },
-  'DB skull crusher':             { sets:3, minRep:10, maxRep:15, inc:2,   type:'db'      },
-};
-
-const PROGRAMMES_FIGHTERS = {
-  'Day 1 — Upper':              ['Bench press','Weighted dip','Pull-up','Chest-supported row','Lateral raise','Curl variation','Overhead tricep extension','Face pulls (accessory)'],
-  'Day 2 — Lower':              ['Front squat','Stiff-leg deadlift','Bulgarian split squat','Leg extension','Weighted plank / ab wheel'],
-  'Day 3 — Full body':          ['Deadlift','Incline press','Pull-up variation','Hip thrust','Lateral raise (D3)','DB hammer curl','DB skull crusher'],
-};
-
-// ── UPPER / LOWER PROGRAMME (original — jbrochet) ────────────────────────────
-const EX_CONFIG_UL = {
-  'Barbell bench press':        { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
-  'Weighted pull-ups':          { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
-  'Overhead press':             { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Barbell row':                { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Face pulls':                 { sets:3, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
-  'Rear delt fly':              { sets:3, minRep:15, maxRep:15, inc:2,   type:'db'      },
-  'EZ bar preacher curls':      { sets:3, minRep:10, maxRep:12, inc:2,   type:'barbell' },
-  'Farmer carries':             { sets:3, minRep:0,  maxRep:0,  inc:0,   type:'bw'      },
-  'Incline DB press':           { sets:4, minRep:8,  maxRep:10, inc:2,   type:'db'      },
-  'Cable row':                  { sets:4, minRep:10, maxRep:12, inc:2.5, type:'cable'   },
-  'DB shoulder press':          { sets:3, minRep:10, maxRep:12, inc:2,   type:'db'      },
-  'Lat pulldown':               { sets:3, minRep:10, maxRep:12, inc:2.5, type:'cable'   },
-  'Pec dec / cable crossover':  { sets:3, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
-  'Lateral raises':             { sets:4, minRep:15, maxRep:15, inc:2,   type:'db'      },
-  'Tricep pushdowns':           { sets:2, minRep:15, maxRep:15, inc:2.5, type:'cable'   },
-  'Hammer curls':               { sets:2, minRep:12, maxRep:12, inc:2,   type:'db'      },
-  'Reverse wrist curls':        { sets:3, minRep:15, maxRep:15, inc:0,   type:'db'      },
-  'Squat':                      { sets:4, minRep:5,  maxRep:6,  inc:2.5, type:'barbell' },
-  'Romanian deadlift':          { sets:3, minRep:8,  maxRep:8,  inc:2.5, type:'barbell' },
-  'Leg press':                  { sets:3, minRep:10, maxRep:12, inc:2.5, type:'machine' },
-  'Leg curl':                   { sets:3, minRep:10, maxRep:12, inc:2.5, type:'machine' },
-  'Calf raises':                { sets:3, minRep:15, maxRep:20, inc:2.5, type:'machine' },
-  'Hanging knee raises':        { sets:3, minRep:10, maxRep:12, inc:0,   type:'bw'      },
-  'Wrist curls':                { sets:3, minRep:15, maxRep:15, inc:0,   type:'db'      },
-  'Deadlift':                   { sets:3, minRep:5,  maxRep:5,  inc:2.5, type:'barbell' },
-  'Bulgarian split squat (UL)': { sets:3, minRep:10, maxRep:10, inc:2,   type:'db'      },
-  'Plank hold':                 { sets:3, minRep:0,  maxRep:0,  inc:0,   type:'bw'      },
-};
-
-const PROGRAMMES_UL = {
-  'Upper A': ['Barbell bench press','Weighted pull-ups','Overhead press','Barbell row','Face pulls','Rear delt fly','EZ bar preacher curls','Farmer carries'],
-  'Upper B': ['Incline DB press','Cable row','DB shoulder press','Lat pulldown','Pec dec / cable crossover','Lateral raises','Tricep pushdowns','Hammer curls','Reverse wrist curls'],
-  'Lower A': ['Squat','Romanian deadlift','Leg press','Leg curl','Calf raises','Hanging knee raises','Wrist curls'],
-  'Lower B': ['Deadlift','Bulgarian split squat (UL)','Leg press','Leg curl','Calf raises','Plank hold','Wrist curls'],
-};
-
-let CURRENT_PROGRAMME = 'upper_lower';
-let EX_CONFIG = EX_CONFIG_UL;
-let PROGRAMMES = PROGRAMMES_UL;
-
-function setProgramme(prog) {
-  CURRENT_PROGRAMME = prog;
-  if (prog === 'fighters') {
-    EX_CONFIG = EX_CONFIG_FIGHTERS;
-    PROGRAMMES = PROGRAMMES_FIGHTERS;
-  } else {
-    EX_CONFIG = EX_CONFIG_UL;
-    PROGRAMMES = PROGRAMMES_UL;
-  }
-  // Update session dropdown
-  const sel = document.getElementById('lift-session');
-  if (sel) {
-    sel.innerHTML = Object.keys(PROGRAMMES).map(k => `<option value="${k}">${k}</option>`).join('');
-  }
-  renderLiftForm();
-}
-
-async function loadUserProgramme() {
-  const { data } = await sb.from('config').select('value').eq('key', 'programme:' + CURRENT_USER).single();
-  if (data?.value) setProgramme(data.value);
-}
-
-async function saveUserProgramme(prog) {
-  await sb.from('config').upsert({ key: 'programme:' + CURRENT_USER, value: prog }, { onConflict: 'key' });
-  setProgramme(prog);
-  toast('Programme updated');
-}
-
-const MEAL_SLOTS = ['Breakfast','Pre-training snack','Lunch','Post-training','Dinner','Evening snack'];
-let currentWeights = {};
-
-function today() { return new Date().toISOString().split('T')[0]; }
-
-function toast(msg, isError) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => t.className = 'toast', 2200);
-}
-
-let CURRENT_USER = null;
-
-// ── MOBILE NAV ────────────────────────────────────────────────────────────────
-function isMobile() { return window.innerWidth <= 700; }
-
-function toggleMoreMenu() {
-  const m = document.getElementById('more-menu');
-  m.classList.toggle('open');
-}
-
-function closeMobileNav() {
-  document.getElementById('more-menu')?.classList.remove('open');
-  // Sync bottom nav active state
-  if (isMobile()) {
-    document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  }
-}
-
-function syncBottomNav(page) {
-  if (!isMobile()) return;
-  const map = { dashboard:'bn-dashboard', lift:'bn-lift', bjj:'bn-bjj', mobility:'bn-mobility' };
-  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  if (map[page]) document.getElementById(map[page])?.classList.add('active');
-  else document.getElementById('bn-more')?.classList.add('active');
-}
-
-// ── FORM PERSISTENCE ──────────────────────────────────────────────────────────
-function getLiftCacheKey() {
-  const session = document.getElementById('lift-session')?.value || '';
-  const date = document.getElementById('lift-date')?.value || today();
-  return `lift_draft:${CURRENT_USER}:${date}:${session}`;
-}
-
-function saveLiftDraft() {
-  const session = document.getElementById('lift-session')?.value;
-  if (!session) return;
-  const exNames = PROGRAMMES[session] || [];
-  const data = {};
-  exNames.forEach((name, ei) => {
-    const cfg = EX_CONFIG[name] || {};
-    data[name] = Array.from({length: cfg.sets||3}, (_,s) => ({
-      kg: document.getElementById(`e${ei}s${s}kg`)?.value || '',
-      reps: document.getElementById(`e${ei}s${s}reps`)?.value || '',
-    }));
-  });
-  try { localStorage.setItem(getLiftCacheKey(), JSON.stringify(data)); } catch(e) {}
-}
-
-function restoreLiftDraft() {
-  try {
-    const cached = localStorage.getItem(getLiftCacheKey());
-    if (!cached) return;
-    const data = JSON.parse(cached);
-    const session = document.getElementById('lift-session')?.value;
-    const exNames = PROGRAMMES[session] || [];
-    exNames.forEach((name, ei) => {
-      const sets = data[name];
-      if (!sets) return;
-      sets.forEach((s, si) => {
-        const kg = document.getElementById(`e${ei}s${si}kg`);
-        const reps = document.getElementById(`e${ei}s${si}reps`);
-        if (kg && s.kg) kg.value = s.kg;
-        if (reps && s.reps) reps.value = s.reps;
-      });
-    });
-    toast('Draft restored ✓');
-  } catch(e) {}
-}
-
-function clearLiftDraft() {
-  try { localStorage.removeItem(getLiftCacheKey()); } catch(e) {}
-}
-
-function fillDown(ei, totalSets, field) {
-  const firstVal = document.getElementById(`e${ei}s0${field}`)?.value;
-  if (!firstVal) return;
-  for (let s = 1; s < totalSets; s++) {
-    const el = document.getElementById(`e${ei}s${s}${field}`);
-    if (el && !el.value) el.value = firstVal;
-  }
-  saveLiftDraft();
-}
-
-async function checkAuth() {
-  const username = document.getElementById('auth-username').value.trim().toLowerCase();
-  const input = document.getElementById('auth-input').value;
-  const errEl = document.getElementById('auth-error');
-  if (!username || !input) { errEl.textContent = 'Enter username and password'; return; }
-  const { data, error } = await sb.from('config').select('value').eq('key', 'user:' + username).single();
-  if (error || !data) { errEl.textContent = 'User not found'; return; }
-  if (input === data.value) {
-    CURRENT_USER = username;
-    sessionStorage.setItem('auth','ok');
-    sessionStorage.setItem('user', username);
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'grid';
-    document.querySelector('.sidebar-logo').innerHTML = `BJJ/BULK<span>@${username}</span>`;
-    init();
-  } else {
-    errEl.textContent = 'Incorrect password';
-    document.getElementById('auth-input').value = '';
-  }
-}
-
-function nav(page, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  if (btn) btn.classList.add('active');
-  syncBottomNav(page);
-  if (page === 'dashboard') renderDashboard();
-  if (page === 'history') renderHistory();
-  if (page === 'weight') renderBWHistory();
-  if (page === 'overload') renderProgressionPage();
-  if (page === 'measurements') renderMeasurementsHistory();
-  if (page === 'mobility') renderMobilityStreak();
-  if (page === 'programme') renderProgrammePage();
-}
-
-async function loadWeights() {
-  const { data } = await sb.from('exercise_weights').select('*').eq('user_id', CURRENT_USER);
-  if (data) data.forEach(r => { currentWeights[r.exercise] = { kg: parseFloat(r.weight_kg), inc: parseFloat(r.increment) }; });
-}
-
-async function setWeight(exercise, kg) {
-  await sb.from('exercise_weights').upsert({ exercise, weight_kg: kg, updated_at: new Date().toISOString(), user_id: CURRENT_USER }, { onConflict: 'exercise,user_id' });
-  currentWeights[exercise] = { ...currentWeights[exercise], kg };
-}
-
-function hitRepRange(exercise, setsData) {
-  const cfg = EX_CONFIG[exercise];
-  if (!cfg || cfg.type === 'bw' || cfg.inc === 0) return false;
-  const validSets = setsData.filter(s => parseFloat(s.reps) > 0);
-  if (validSets.length < cfg.sets) return false;
-  return validSets.every(s => parseFloat(s.reps) >= cfg.maxRep);
-}
-
-async function renderLiftForm() {
-  await loadWeights();
-  const session = document.getElementById('lift-session')?.value;
-  if (!session) return;
-  const exNames = PROGRAMMES[session] || [];
-
-  // Fetch previous session of same type for pre-population
-  let prevData = {};
-  try {
-    const { data: prev } = await sb.from('lifts')
-      .select('exercises')
-      .eq('user_id', CURRENT_USER)
-      .eq('session', session)
-      .order('date', { ascending: false })
-      .limit(1)
-      .single();
-    if (prev?.exercises) {
-      prev.exercises.forEach(ex => { prevData[ex.name] = ex.sets; });
-    }
-  } catch(e) {}
-
-  document.getElementById('lift-exercises').innerHTML = exNames.map((name, ei) => {
-    const cfg = EX_CONFIG[name] || {};
-    const w = currentWeights[name] || { kg: 0 };
-    const isBW = cfg.type === 'bw';
-    const targetReps = cfg.minRep === cfg.maxRep ? `${cfg.minRep} reps` : `${cfg.minRep}–${cfg.maxRep} reps`;
-    const prev = prevData[name];
-    const prevKg = prev?.[0]?.kg || '';
-    const prevReps = prev?.[0]?.reps || '';
-    const suggestedKg = w.kg > 0 ? w.kg : (prevKg || '');
-    return `<div class="ex-block">
-      <div class="ex-header">
-        <div class="ex-name">${name}</div>
-        <div class="ex-meta">
-          ${isBW ? '' : `<span class="ex-suggested">${suggestedKg ? suggestedKg + ' kg' : 'Set weight'}</span>`}
-          ${(!isBW && cfg.inc > 0) ? `<span class="ex-inc-badge">+${cfg.inc}kg on PR</span>` : ''}
-          <span class="ex-target">${cfg.sets} × ${targetReps}</span>
-        </div>
-      </div>
-      ${prev ? `<div style="font-size:10px;color:var(--hint);margin-bottom:6px;">Last session: ${prev.map((s,i) => `Set ${i+1}: ${s.kg||'—'}kg × ${s.reps||'—'}`).join(' · ')}</div>` : ''}
-      <div class="set-header"><span>#</span><span>${isBW ? 'N/A' : 'Weight (kg)'}</span><span>Reps</span></div>
-      ${Array.from({length: cfg.sets}, (_,s) => `
-        <div class="set-row">
-          <span class="set-num">${s+1}</span>
-          <input type="number" step="0.5"
-            placeholder="${isBW ? '—' : (prevKg || w.kg || 'kg')}"
-            id="e${ei}s${s}kg"
-            value="${isBW ? '' : (s === 0 ? '' : '')}"
-            ${isBW ? 'disabled style="opacity:0.3"' : ''}
-            oninput="saveLiftDraft();${s === 0 && !isBW ? `fillDown(${ei},${cfg.sets},'kg')` : ''}">
-          <input type="number"
-            placeholder="${prevReps || 'reps'}"
-            id="e${ei}s${s}reps"
-            oninput="saveLiftDraft();${s === 0 ? `fillDown(${ei},${cfg.sets},'reps')` : ''}">
-        </div>`).join('')}
-    </div>`;
-  }).join('');
-  document.getElementById('overload-alerts').innerHTML = '';
-  restoreLiftDraft();
-}
-
-async function saveLift() {
-  const session = document.getElementById('lift-session').value;
-  const date = document.getElementById('lift-date').value || today();
-  const feel = document.getElementById('lift-feel').value;
-  const exNames = PROGRAMMES[session];
-  const exercises = exNames.map((name, ei) => {
-    const cfg = EX_CONFIG[name] || {};
-    return { name, sets: Array.from({length: cfg.sets||3}, (_,s) => ({
-      kg: document.getElementById(`e${ei}s${s}kg`)?.value || '',
-      reps: document.getElementById(`e${ei}s${s}reps`)?.value || '',
-    }))};
-  });
-  const { error } = await sb.from('lifts').insert({ date, session, exercises, feel, user_id: CURRENT_USER });
-  if (error) { toast('Error saving lift', true); return; }
-  clearLiftDraft();
-  const alerts = [];
-  for (const ex of exercises) {
-    const cfg = EX_CONFIG[ex.name];
-    if (!cfg || cfg.type === 'bw' || cfg.inc === 0) continue;
-    if (hitRepRange(ex.name, ex.sets)) {
-      const current = currentWeights[ex.name]?.kg || 0;
-      const next = Math.round((current + cfg.inc) * 100) / 100;
-      await setWeight(ex.name, next);
-      alerts.push(`${ex.name}: ${current}kg → <strong>${next}kg</strong>`);
-    } else {
-      const usedKg = parseFloat(ex.sets.find(s => s.kg)?.kg || 0);
-      if (usedKg > 0 && usedKg > (currentWeights[ex.name]?.kg || 0)) await setWeight(ex.name, usedKg);
-    }
-  }
-  if (alerts.length) {
-    document.getElementById('overload-alerts').innerHTML =
-      `<div class="info" style="margin-top:1rem;">🏆 Rep targets hit — weight increased for next session:<br>${alerts.join('<br>')}</div>`;
-  }
-  toast('Lift saved' + (alerts.length ? ` · ${alerts.length} exercise(s) progressed` : ''));
-}
-
-async function saveBJJ() {
-  const { error } = await sb.from('bjj').insert({
-    date: document.getElementById('bjj-date').value || today(),
-    type: document.getElementById('bjj-type').value,
-    duration_min: parseInt(document.getElementById('bjj-dur').value) || 60,
-    energy: document.getElementById('bjj-energy').value,
-    notes: document.getElementById('bjj-notes').value,
-    user_id: CURRENT_USER,
-  });
-  if (error) { toast('Error saving BJJ', true); return; }
-  document.getElementById('bjj-notes').value = '';
-  toast('BJJ session saved');
-}
-
-async function saveMobility() {
-  const date = document.getElementById('mob-date').value || today();
-  const { error } = await sb.from('mobility_log').upsert({ date, completed: true, duration_min: 15, notes: document.getElementById('mob-notes').value, user_id: CURRENT_USER }, { onConflict: 'date,user_id' });
-  if (error) { toast('Error saving mobility', true); return; }
-  document.getElementById('mob-notes').value = '';
-  toast('Mobility logged ✓');
-  renderMobilityStreak();
-}
-
-async function renderMobilityStreak() {
-  const { data } = await sb.from('mobility_log').select('date').eq('completed',true).eq('user_id', CURRENT_USER).order('date',{ascending:false}).limit(28);
-  const done = new Set((data||[]).map(r=>r.date));
-  const dots = [];
-  for (let i = 27; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const ds = d.toISOString().split('T')[0];
-    dots.push(`<div class="mob-dot${done.has(ds)?' done':''}" title="${ds}"></div>`);
-  }
-  document.getElementById('mob-streak').innerHTML = dots.join('');
-  let streak = 0;
-  const sd = new Date();
-  while (streak < 365) {
-    if (done.has(sd.toISOString().split('T')[0])) { streak++; sd.setDate(sd.getDate()-1); } else break;
-  }
-  const el = document.getElementById('s-mob');
-  if (el) el.textContent = streak + 'd';
-}
-
-function renderMealForm() {
-  document.getElementById('meal-slots').innerHTML = MEAL_SLOTS.map((m,i) => `
-    <div class="meal-slot">
-      <span class="meal-slot-label">${m}</span>
-      <input type="text" id="meal${i}" placeholder="e.g. Chicken + rice">
-      <select id="meal${i}eaten"><option value="yes">Eaten</option><option value="skip">Skipped</option></select>
-    </div>`).join('');
-}
-
-async function saveMeals() {
-  const date = document.getElementById('meal-date').value || today();
-  const meals = MEAL_SLOTS.map((m,i) => ({ slot:m, food: document.getElementById(`meal${i}`)?.value||'', eaten: document.getElementById(`meal${i}eaten`)?.value||'yes' }));
-  const { error } = await sb.from('meals').insert({ date, meals, user_id: CURRENT_USER });
-  if (error) { toast('Error saving meals', true); return; }
-  toast('Meals saved');
-}
-
-async function saveGut() {
-  const { error } = await sb.from('gut_log').insert({
-    date: document.getElementById('meal-date').value || today(),
-    feel: document.getElementById('gut-feel').value,
-    notes: document.getElementById('gut-notes').value,
-    user_id: CURRENT_USER,
-  });
-  if (error) { toast('Error saving gut log', true); return; }
-  document.getElementById('gut-notes').value = '';
-  toast('Gut log saved');
-}
-
-async function saveBW() {
-  const weight_kg = parseFloat(document.getElementById('bw-val').value);
-  if (isNaN(weight_kg)) { toast('Enter a valid weight', true); return; }
-  const { error } = await sb.from('bodyweight').insert({ date: document.getElementById('bw-date').value||today(), weight_kg, time_of_day: document.getElementById('bw-time').value, user_id: CURRENT_USER });
-  if (error) { toast('Error saving weight', true); return; }
-  document.getElementById('bw-val').value = '';
-  toast('Weight saved');
-  renderBWHistory();
-}
-
-async function renderBWHistory() {
-  const { data } = await sb.from('bodyweight').select('*').eq('user_id', CURRENT_USER).order('date',{ascending:false}).limit(20);
-  const el = document.getElementById('bw-history');
-  if (!data?.length) { el.innerHTML = '<div class="empty">No entries yet</div>'; return; }
-  el.innerHTML = data.map(l => `<div class="log-row"><div class="log-date">${l.date}</div><div>${parseFloat(l.weight_kg).toFixed(1)} kg <span style="color:var(--hint);font-size:11px;margin-left:6px;">${l.time_of_day}</span></div></div>`).join('');
-}
-
-async function renderProgressionPage() {
-  await loadWeights();
-  const keys = Object.keys(EX_CONFIG);
-  document.getElementById('po-table-wrap').innerHTML = `<table class="po-table">
-    <thead><tr><th>Exercise</th><th>Type</th><th>Current weight</th><th>Next increment</th><th>Target reps</th></tr></thead>
-    <tbody>${keys.map(k => {
-      const cfg = EX_CONFIG[k]; const w = currentWeights[k]; const isBW = cfg.type==='bw';
-      const target = isBW ? 'reps only' : (cfg.minRep===cfg.maxRep ? `${cfg.minRep}` : `${cfg.minRep}–${cfg.maxRep}`);
-      return `<tr><td>${k}</td><td style="color:var(--hint);font-size:11px">${cfg.type}</td><td><span class="po-weight">${isBW?'—':((w?.kg||0)+' kg')}</span></td><td><span class="po-inc">${isBW?'—':'+'+cfg.inc+'kg'}</span></td><td style="color:var(--muted);font-size:12px">${target}</td></tr>`;
-    }).join('')}</tbody></table>`;
-  document.getElementById('override-ex').innerHTML = keys.filter(k=>EX_CONFIG[k].type!=='bw').map(k=>`<option value="${k}">${k}</option>`).join('');
-}
-
-async function overrideWeight() {
-  const ex = document.getElementById('override-ex').value;
-  const kg = parseFloat(document.getElementById('override-kg').value);
-  if (isNaN(kg)) { toast('Enter a valid weight', true); return; }
-  await setWeight(ex, kg);
-  toast(`${ex} updated to ${kg}kg`);
-  document.getElementById('override-kg').value = '';
-  renderProgressionPage();
-}
-
-function getWeekDates() {
-  const d = new Date(); const day = d.getDay();
-  const diff = d.getDate() - day + (day===0?-6:1);
-  const mon = new Date(new Date().setDate(diff));
-  return Array.from({length:7}, (_,i) => { const nd=new Date(mon); nd.setDate(mon.getDate()+i); return nd.toISOString().split('T')[0]; });
-}
-
-async function renderDashboard() {
-  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-  const weekDates = getWeekDates();
-  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const tod = today();
-  const [{ data: lifts },{ data: bjj },{ data: mob },{ data: bw },{ data: allLifts },{ data: allBJJ },{ data: mobAll }] = await Promise.all([
-    sb.from('lifts').select('date').eq('user_id',CURRENT_USER).gte('date',weekDates[0]),
-    sb.from('bjj').select('date').eq('user_id',CURRENT_USER).gte('date',weekDates[0]),
-    sb.from('mobility_log').select('date').eq('completed',true).eq('user_id',CURRENT_USER).gte('date',weekDates[0]),
-    sb.from('bodyweight').select('weight_kg,date').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(10),
-    sb.from('lifts').select('date').eq('user_id',CURRENT_USER).order('date',{ascending:false}),
-    sb.from('bjj').select('date').eq('user_id',CURRENT_USER).order('date',{ascending:false}),
-    sb.from('mobility_log').select('date').eq('completed',true).eq('user_id',CURRENT_USER).order('date',{ascending:false}),
-  ]);
-  const lArr=lifts||[], bArr=bjj||[], mArr=mob||[], wArr=bw||[];
-  document.getElementById('s-lifts').textContent = lArr.length;
-  document.getElementById('s-bjj').textContent = bArr.length;
-  document.getElementById('s-weight').textContent = wArr.length ? parseFloat(wArr[0].weight_kg).toFixed(1) : '—';
-  const allDates = new Set([...(allLifts||[]).map(l=>l.date),...(allBJJ||[]).map(l=>l.date)]);
-  let streak=0; const sd=new Date();
-  while(streak<365){if(allDates.has(sd.toISOString().split('T')[0])){streak++;sd.setDate(sd.getDate()-1);}else break;}
-  document.getElementById('s-streak').textContent = streak;
-  const mobDone = new Set((mobAll||[]).map(r=>r.date));
-  let mStreak=0; const md=new Date();
-  while(mStreak<365){if(mobDone.has(md.toISOString().split('T')[0])){mStreak++;md.setDate(md.getDate()-1);}else break;}
-  document.getElementById('s-mob').textContent = mStreak+'d';
-  document.getElementById('week-view').innerHTML = weekDates.map((wd,i) => `
-    <div class="wk-day${wd===tod?' today':''}">
-      <div class="wk-label">${days[i]}</div>
-      <div class="wk-dots">
-        <div class="dot${lArr.some(l=>l.date===wd)?' lift':''}"></div>
-        <div class="dot${bArr.some(l=>l.date===wd)?' bjj':''}"></div>
-        <div class="dot${mArr.some(l=>l.date===wd)?' mob':''}"></div>
-      </div>
-    </div>`).join('');
-  const wChart = document.getElementById('weight-chart');
-  if (!wArr.length) { wChart.innerHTML = '<div class="empty" style="width:100%">No weight data yet</div>'; }
-  else {
-    const recent = [...wArr].reverse(); const vals = recent.map(w=>w.weight_kg);
-    const mn=Math.min(...vals)-0.5, mx=Math.max(...vals)+0.5;
-    wChart.innerHTML = recent.map(w => { const h=Math.round(((w.weight_kg-mn)/(mx-mn))*70+8); return `<div class="wbar-col"><div class="wbar-val">${parseFloat(w.weight_kg).toFixed(1)}</div><div class="wbar" style="height:${h}px"></div><div class="wbar-lbl">${w.date.slice(5)}</div></div>`; }).join('');
-  }
-  await loadWeights();
-  const entries = Object.entries(currentWeights).filter(([,v])=>v.kg>0).sort((a,b)=>b[1].kg-a[1].kg).slice(0,8);
-  const prEl = document.getElementById('pr-list');
-  if (!entries.length) { prEl.innerHTML = '<div class="empty">Log lifts to see working weights</div>'; return; }
-  const maxKg = Math.max(...entries.map(([,v])=>v.kg));
-  prEl.innerHTML = entries.map(([name,v]) => `<div class="pr-row"><span class="pr-name">${name}</span><div class="pr-bar-wrap"><div class="pr-bar" style="width:${Math.round((v.kg/maxKg)*100)}%"></div></div><span class="pr-val">${v.kg}kg</span></div>`).join('');
-}
-
-async function renderHistory() {
-  const [{ data: lifts },{ data: bjj },{ data: bw },{ data: mob }] = await Promise.all([
-    sb.from('lifts').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
-    sb.from('bjj').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
-    sb.from('bodyweight').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
-    sb.from('mobility_log').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(12),
-  ]);
-  const all = [
-    ...(lifts||[]).map(l=>({...l,kind:'lift'})),
-    ...(bjj||[]).map(l=>({...l,kind:'bjj'})),
-    ...(bw||[]).map(l=>({...l,kind:'weight'})),
-    ...(mob||[]).map(l=>({...l,kind:'mob'})),
-  ].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,50);
-  const el = document.getElementById('history-list');
-  if (!all.length) { el.innerHTML = '<div class="empty">Nothing logged yet</div>'; return; }
-  el.innerHTML = all.map(l => {
-    let badge, detail;
-    if (l.kind==='lift') { badge='<span class="badge badge-lift">Lift</span>'; detail=`${l.session} · ${l.feel||''}`; }
-    else if (l.kind==='bjj') { badge='<span class="badge badge-bjj">BJJ</span>'; detail=`${l.type} · ${l.duration_min}min · ${l.energy}${l.notes?' · '+l.notes:''}`; }
-    else if (l.kind==='weight') { badge='<span class="badge badge-weight">Weight</span>'; detail=`${parseFloat(l.weight_kg).toFixed(1)}kg · ${l.time_of_day}`; }
-    else { badge='<span class="badge badge-mob">Mobility</span>'; detail=`${l.duration_min}min${l.notes?' · '+l.notes:''}`; }
-    return `<div class="log-row"><div class="log-date">${l.date}<br><br>${badge}</div><div><div style="font-size:13px;color:var(--text)">${detail}</div></div></div>`;
-  }).join('');
-}
-
-function renderProgrammePage() {
-  const label = document.getElementById('prog-current-label');
-  if (label) label.textContent = CURRENT_PROGRAMME === 'fighters' ? '— Fighters' : '— Upper/Lower';
-  ['fighters','upper_lower'].forEach(p => {
-    const el = document.getElementById('prog-' + p);
-    if (!el) return;
-    el.style.border = p === CURRENT_PROGRAMME ? '1px solid var(--purple)' : '1px solid var(--border2)';
-    el.style.background = p === CURRENT_PROGRAMME ? 'var(--purple-dim)' : 'var(--surface2)';
-  });
-}
-
-async function saveMeasurements() {
-  const date = document.getElementById('meas-date').value || today();
-  const data = {
-    date,
-    chest: parseFloat(document.getElementById('m-chest').value) || null,
-    waist: parseFloat(document.getElementById('m-waist').value) || null,
-    shoulders: parseFloat(document.getElementById('m-shoulders').value) || null,
-    hips: parseFloat(document.getElementById('m-hips').value) || null,
-    arm_l: parseFloat(document.getElementById('m-arm-l').value) || null,
-    arm_r: parseFloat(document.getElementById('m-arm-r').value) || null,
-    forearm_l: parseFloat(document.getElementById('m-forearm-l').value) || null,
-    forearm_r: parseFloat(document.getElementById('m-forearm-r').value) || null,
-    thigh_l: parseFloat(document.getElementById('m-thigh-l').value) || null,
-    thigh_r: parseFloat(document.getElementById('m-thigh-r').value) || null,
-    calf_l: parseFloat(document.getElementById('m-calf-l').value) || null,
-    calf_r: parseFloat(document.getElementById('m-calf-r').value) || null,
-    notes: document.getElementById('m-notes').value || null,
-  };
-  const { error } = await sb.from('measurements').insert({...data, user_id: CURRENT_USER});
-  if (error) { toast('Error saving measurements', true); return; }
-  toast('Check-in saved');
-  ['m-chest','m-waist','m-shoulders','m-hips','m-arm-l','m-arm-r','m-forearm-l','m-forearm-r','m-thigh-l','m-thigh-r','m-calf-l','m-calf-r','m-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-  renderMeasurementsHistory();
-}
-
-async function renderMeasurementsHistory() {
-  const { data } = await sb.from('measurements').select('*').eq('user_id', CURRENT_USER).order('date',{ascending:false}).limit(10);
-  const el = document.getElementById('meas-history');
-  if (!data?.length) { el.innerHTML = '<div class="empty">No check-ins yet</div>'; return; }
-  el.innerHTML = data.map(m => `
-    <div class="log-row">
-      <div class="log-date">${m.date}</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-        ${m.chest ? `Chest: <strong style="color:var(--text)">${m.chest}cm</strong> · ` : ''}
-        ${m.waist ? `Waist: <strong style="color:var(--text)">${m.waist}cm</strong> · ` : ''}
-        ${m.shoulders ? `Shoulders: <strong style="color:var(--text)">${m.shoulders}cm</strong>` : ''}<br>
-        ${m.arm_l ? `Arms: <strong style="color:var(--text)">${m.arm_l}/${m.arm_r}cm</strong> · ` : ''}
-        ${m.forearm_l ? `Forearms: <strong style="color:var(--text)">${m.forearm_l}/${m.forearm_r}cm</strong>` : ''}<br>
-        ${m.thigh_l ? `Thighs: <strong style="color:var(--text)">${m.thigh_l}/${m.thigh_r}cm</strong> · ` : ''}
-        ${m.calf_l ? `Calves: <strong style="color:var(--text)">${m.calf_l}/${m.calf_r}cm</strong>` : ''}
-        ${m.notes ? `<br><span style="color:var(--hint);font-size:11px;">${m.notes}</span>` : ''}
-      </div>
-    </div>`).join('');
-}
-
-async function generateExport() {
-  const [{ data: bw }, { data: meas }, { data: lifts }, { data: bjjLogs }, { data: mobLogs }, { data: weights }] = await Promise.all([
-    sb.from('bodyweight').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(8),
-    sb.from('measurements').select('*').eq('user_id',CURRENT_USER).order('date',{ascending:false}).limit(2),
-    sb.from('lifts').select('date').eq('user_id',CURRENT_USER).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
-    sb.from('bjj').select('date').eq('user_id',CURRENT_USER).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
-    sb.from('mobility_log').select('date').eq('completed',true).eq('user_id',CURRENT_USER).gte('date', new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0]),
-    sb.from('exercise_weights').select('*').eq('user_id',CURRENT_USER).order('exercise'),
-  ]);
-
-  const hrv = document.getElementById('exp-hrv').value;
-  const rhr = document.getElementById('exp-rhr').value;
-  const latest = bw?.[0];
-  const trend = bw ? [...bw].reverse().map(w=>parseFloat(w.weight_kg).toFixed(1)+'kg').join(' → ') : '—';
-  const latestMeas = meas?.[0];
-  const prevMeas = meas?.[1];
-  const exportDate = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-
-  let txt = `BJJ TRACKER EXPORT — ${exportDate}\n`;
-  txt += `${'─'.repeat(40)}\n\n`;
-
-  txt += `BODYWEIGHT\n`;
-  txt += `Current: ${latest ? parseFloat(latest.weight_kg).toFixed(1)+' kg' : '—'}\n`;
-  txt += `Trend (recent): ${trend}\n\n`;
-
-  if (latestMeas) {
-    txt += `MEASUREMENTS (${latestMeas.date})\n`;
-    if (latestMeas.chest) txt += `Chest: ${latestMeas.chest} cm${prevMeas?.chest ? ` (prev: ${prevMeas.chest})` : ''}\n`;
-    if (latestMeas.waist) txt += `Waist: ${latestMeas.waist} cm${prevMeas?.waist ? ` (prev: ${prevMeas.waist})` : ''}\n`;
-    if (latestMeas.shoulders) txt += `Shoulders: ${latestMeas.shoulders} cm${prevMeas?.shoulders ? ` (prev: ${prevMeas.shoulders})` : ''}\n`;
-    if (latestMeas.hips) txt += `Hips: ${latestMeas.hips} cm${prevMeas?.hips ? ` (prev: ${prevMeas.hips})` : ''}\n`;
-    if (latestMeas.arm_l) txt += `Arms: L ${latestMeas.arm_l} / R ${latestMeas.arm_r} cm${prevMeas?.arm_l ? ` (prev: ${prevMeas.arm_l}/${prevMeas.arm_r})` : ''}\n`;
-    if (latestMeas.forearm_l) txt += `Forearms: L ${latestMeas.forearm_l} / R ${latestMeas.forearm_r} cm${prevMeas?.forearm_l ? ` (prev: ${prevMeas.forearm_l}/${prevMeas.forearm_r})` : ''}\n`;
-    if (latestMeas.thigh_l) txt += `Thighs: L ${latestMeas.thigh_l} / R ${latestMeas.thigh_r} cm${prevMeas?.thigh_l ? ` (prev: ${prevMeas.thigh_l}/${prevMeas.thigh_r})` : ''}\n`;
-    if (latestMeas.calf_l) txt += `Calves: L ${latestMeas.calf_l} / R ${latestMeas.calf_r} cm${prevMeas?.calf_l ? ` (prev: ${prevMeas.calf_l}/${prevMeas.calf_r})` : ''}\n`;
-    txt += '\n';
-  }
-
-  txt += `WORKING WEIGHTS\n`;
-  (weights||[]).filter(w=>w.weight_kg>0).forEach(w => {
-    txt += `${w.exercise}: ${w.weight_kg} kg\n`;
-  });
-  txt += '\n';
-
-  txt += `TRAINING THIS MONTH\n`;
-  txt += `Lifts completed: ${lifts?.length || 0}\n`;
-  txt += `BJJ sessions: ${bjjLogs?.length || 0}\n`;
-  txt += `Mobility sessions: ${mobLogs?.length || 0}\n\n`;
-
-  if (hrv || rhr) {
-    txt += `RECOVERY (Apple Watch)\n`;
-    if (hrv) txt += `Avg HRV: ${hrv} ms\n`;
-    if (rhr) txt += `Resting HR: ${rhr} bpm\n`;
-    txt += '\n';
-  }
-
-  txt += `CONTEXT\n`;
-  txt += `Training: Upper/Lower 4x/week + BJJ 5-6x/week + daily mobility\n`;
-  txt += `Goal: Clean bulk, Frank Zane classic physique aesthetic\n`;
-  txt += `Diet: No dairy, no fish, no pork. Whole foods. 2,800-3,200 kcal.\n`;
-  txt += `Focus areas: Forearms, chest, bicep peak, lateral delts (long arms)\n`;
-
-  document.getElementById('export-text').value = txt;
-  document.getElementById('export-output').style.display = 'block';
-}
-
-function copyExport() {
-  const txt = document.getElementById('export-text');
-  txt.select();
-  navigator.clipboard.writeText(txt.value).then(() => toast('Copied to clipboard'));
-}
-
-async function clearAll() {
-  await Promise.all([
-    sb.from('lifts').delete().eq('user_id',CURRENT_USER),
-    sb.from('bjj').delete().eq('user_id',CURRENT_USER),
-    sb.from('bodyweight').delete().eq('user_id',CURRENT_USER),
-    sb.from('mobility_log').delete().eq('user_id',CURRENT_USER),
-    sb.from('exercise_weights').delete().eq('user_id',CURRENT_USER),
-    sb.from('measurements').delete().eq('user_id',CURRENT_USER),
-  ]);
-  toast('All data cleared');
-  renderDashboard();
-}
-
-async function init() {
-  const t = today();
-  ['lift-date','bjj-date','mob-date','bw-date','meas-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=t; });
-  const hr = new Date().getHours();
-  const note = document.getElementById('lift-5am-note');
-  if (hr < 7) note.style.display = 'block';
-  if (CURRENT_USER) document.querySelector('.sidebar-logo').innerHTML = `BJJ/BULK<span>@${CURRENT_USER}</span>`;
-  if (isMobile()) document.getElementById('bottom-nav').style.display = 'flex';
-  await loadWeights();
-  await loadUserProgramme();
-  await renderLiftForm();
-  renderMealForm();
-  await renderDashboard();
-}
-
-if (sessionStorage.getItem('auth') === 'ok' && sessionStorage.getItem('user')) {
-  CURRENT_USER = sessionStorage.getItem('user');
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'grid';
-  init();
-}
-</script>
 </body>
 </html>
