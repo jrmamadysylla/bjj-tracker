@@ -1,8 +1,9 @@
 // ── FIGHTERS PROGRAMME ─────────────────────────────────────────────────────────
 const EX_CONFIG_FIGHTERS = {
   'Bench press':                { sets:4, minRep:3,  maxRep:5,  inc:2.5, type:'barbell' },
-  'Weighted dip':               { sets:4, minRep:6,  maxRep:8,  inc:2,   type:'bw'      },
-  'Pull-up':                    { sets:3, minRep:6,  maxRep:8,  inc:2.5, type:'bw'      },
+  'Decline DB press':           { sets:4, minRep:6,  maxRep:8,  inc:2,   type:'db'      },
+  'Lat pulldown (fighters)':    { sets:3, minRep:8,  maxRep:12, inc:2.5, type:'cable'   },
+  'Decline DB press':           { sets:4, minRep:6,  maxRep:8,  inc:2,   type:'db'      },
   'Chest-supported row':        { sets:4, minRep:8,  maxRep:10, inc:2.5, type:'machine' },
   'Lateral raise':              { sets:3, minRep:12, maxRep:20, inc:2,   type:'db'      },
   'Curl variation':             { sets:3, minRep:10, maxRep:15, inc:2,   type:'db'      },
@@ -15,7 +16,7 @@ const EX_CONFIG_FIGHTERS = {
   'Weighted plank / ab wheel':  { sets:3, minRep:8,  maxRep:15, inc:0,   type:'bw'      },
   'Deadlift':                   { sets:3, minRep:8,  maxRep:10, inc:2.5, type:'barbell' },
   'Incline press':              { sets:3, minRep:8,  maxRep:10, inc:2,   type:'db'      },
-  'Pull-up variation':          { sets:3, minRep:10, maxRep:12, inc:2.5, type:'bw'      },
+  'Barbell row (fighters)':     { sets:3, minRep:8,  maxRep:10, inc:2.5, type:'barbell' },
   'Hip thrust':                 { sets:3, minRep:8,  maxRep:10, inc:2.5, type:'barbell' },
   'Lateral raise (D3)':         { sets:3, minRep:12, maxRep:20, inc:2,   type:'db'      },
   'DB hammer curl':             { sets:3, minRep:10, maxRep:15, inc:2,   type:'db'      },
@@ -23,9 +24,9 @@ const EX_CONFIG_FIGHTERS = {
 };
 
 const PROGRAMMES_FIGHTERS = {
-  'Day 1 — Upper':    ['Bench press','Weighted dip','Pull-up','Chest-supported row','Lateral raise','Curl variation','Overhead tricep extension','Face pulls (accessory)'],
+  'Day 1 — Upper':    ['Bench press','Decline DB press','Lat pulldown (fighters)','Chest-supported row','Lateral raise','Curl variation','Overhead tricep extension','Face pulls (accessory)'],
   'Day 2 — Lower':    ['Front squat','Stiff-leg deadlift','Bulgarian split squat','Leg extension','Weighted plank / ab wheel'],
-  'Day 3 — Full body':['Deadlift','Incline press','Pull-up variation','Hip thrust','Lateral raise (D3)','DB hammer curl','DB skull crusher'],
+  'Day 3 — Full body':['Deadlift','Incline press','Barbell row (fighters)','Hip thrust','Lateral raise (D3)','DB hammer curl','DB skull crusher'],
 };
 
 // ── UPPER / LOWER PROGRAMME ────────────────────────────────────────────────────
