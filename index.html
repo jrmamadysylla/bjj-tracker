@@ -156,7 +156,44 @@
     .meal-slot { grid-template-columns: 1fr; }
     .mob-routine { grid-template-columns: 1fr; }
     .set-header, .set-row { grid-template-columns: 28px 80px 80px 1fr; }
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 1rem 1rem 5rem; }
+    .bottom-nav { display: flex; }
+    .stat-grid { grid-template-columns: repeat(3, 1fr); }
   }
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    z-index: 50;
+    justify-content: space-around;
+  }
+  .bn-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 4px 8px; cursor: pointer;
+    border: none; background: none; font-family: 'DM Sans', sans-serif;
+    color: var(--hint); font-size: 10px; min-width: 48px;
+  }
+  .bn-item.active { color: var(--purple); }
+  .bn-icon { font-size: 18px; line-height: 1; }
+  .more-menu {
+    display: none; position: fixed; bottom: 60px; right: 0; left: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 0.75rem; z-index: 49; flex-direction: column; gap: 4px;
+  }
+  .more-menu.open { display: flex; }
+  .more-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    border: none; background: none; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--muted); cursor: pointer; text-align: left;
+  }
+  .more-item.active { color: var(--text); background: var(--purple-dim); }
+  .more-item:hover { background: var(--surface2); color: var(--text); }
 </style>
 </head>
 <body>
@@ -176,6 +213,34 @@
 </div>
 
 <div class="layout" id="app" style="display:none;">
+  <!-- Bottom nav (mobile only) -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bn-item active" id="bn-dashboard" onclick="nav('dashboard',this);closeMobileNav()">
+      <span class="bn-icon">◈</span><span>Home</span>
+    </button>
+    <button class="bn-item" id="bn-lift" onclick="nav('lift',this);closeMobileNav()">
+      <span class="bn-icon">↑</span><span>Lift</span>
+    </button>
+    <button class="bn-item" id="bn-bjj" onclick="nav('bjj',this);closeMobileNav()">
+      <span class="bn-icon">◎</span><span>BJJ</span>
+    </button>
+    <button class="bn-item" id="bn-mobility" onclick="nav('mobility',this);closeMobileNav()">
+      <span class="bn-icon">◇</span><span>Mobility</span>
+    </button>
+    <button class="bn-item" id="bn-more" onclick="toggleMoreMenu()">
+      <span class="bn-icon">≡</span><span>More</span>
+    </button>
+  </nav>
+  <!-- More menu (mobile) -->
+  <div class="more-menu" id="more-menu">
+    <button class="more-item" onclick="nav('meal',this);closeMobileNav()"><span>▣</span> Meals & gut</button>
+    <button class="more-item" onclick="nav('weight',this);closeMobileNav()"><span>▷</span> Bodyweight</button>
+    <button class="more-item" onclick="nav('measurements',this);closeMobileNav()"><span>◉</span> Measurements</button>
+    <button class="more-item" onclick="nav('overload',this);closeMobileNav()"><span>↗</span> Progression</button>
+    <button class="more-item" onclick="nav('history',this);closeMobileNav()"><span>≡</span> History</button>
+    <button class="more-item" onclick="nav('export',this);closeMobileNav()"><span>⊠</span> Export</button>
+    <button class="more-item" onclick="nav('programme',this);closeMobileNav()"><span>⊞</span> Programme</button>
+  </div>
   <nav class="sidebar">
     <div class="sidebar-logo">BJJ/BULK<span>TRACKER v2</span></div>
     <div class="sidebar-section">Overview</div>
@@ -611,6 +676,80 @@ function toast(msg, isError) {
 
 let CURRENT_USER = null;
 
+// ── MOBILE NAV ────────────────────────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 700; }
+
+function toggleMoreMenu() {
+  const m = document.getElementById('more-menu');
+  m.classList.toggle('open');
+}
+
+function closeMobileNav() {
+  document.getElementById('more-menu')?.classList.remove('open');
+  // Sync bottom nav active state
+  if (isMobile()) {
+    document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  }
+}
+
+function syncBottomNav(page) {
+  if (!isMobile()) return;
+  const map = { dashboard:'bn-dashboard', lift:'bn-lift', bjj:'bn-bjj', mobility:'bn-mobility' };
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  if (map[page]) document.getElementById(map[page])?.classList.add('active');
+  else document.getElementById('bn-more')?.classList.add('active');
+}
+
+// ── FORM PERSISTENCE ──────────────────────────────────────────────────────────
+function getLiftCacheKey() {
+  const session = document.getElementById('lift-session')?.value || '';
+  const date = document.getElementById('lift-date')?.value || today();
+  return `lift_draft:${CURRENT_USER}:${date}:${session}`;
+}
+
+function saveLiftDraft() {
+  const session = document.getElementById('lift-session')?.value;
+  if (!session) return;
+  const exNames = PROGRAMMES[session] || [];
+  const data = {};
+  exNames.forEach((name, ei) => {
+    const cfg = EX_CONFIG[name] || {};
+    data[name] = Array.from({length: cfg.sets||3}, (_,s) => ({
+      kg: document.getElementById(`e${ei}s${s}kg`)?.value || '',
+      reps: document.getElementById(`e${ei}s${s}reps`)?.value || '',
+      note: document.getElementById(`e${ei}s${s}note`)?.value || '',
+    }));
+  });
+  try { localStorage.setItem(getLiftCacheKey(), JSON.stringify(data)); } catch(e) {}
+}
+
+function restoreLiftDraft() {
+  try {
+    const cached = localStorage.getItem(getLiftCacheKey());
+    if (!cached) return;
+    const data = JSON.parse(cached);
+    const session = document.getElementById('lift-session')?.value;
+    const exNames = PROGRAMMES[session] || [];
+    exNames.forEach((name, ei) => {
+      const sets = data[name];
+      if (!sets) return;
+      sets.forEach((s, si) => {
+        const kg = document.getElementById(`e${ei}s${si}kg`);
+        const reps = document.getElementById(`e${ei}s${si}reps`);
+        const note = document.getElementById(`e${ei}s${si}note`);
+        if (kg && s.kg) kg.value = s.kg;
+        if (reps && s.reps) reps.value = s.reps;
+        if (note && s.note) note.value = s.note;
+      });
+    });
+    toast('Draft restored ✓');
+  } catch(e) {}
+}
+
+function clearLiftDraft() {
+  try { localStorage.removeItem(getLiftCacheKey()); } catch(e) {}
+}
+
 async function checkAuth() {
   const username = document.getElementById('auth-username').value.trim().toLowerCase();
   const input = document.getElementById('auth-input').value;
@@ -636,7 +775,8 @@ function nav(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  syncBottomNav(page);
   if (page === 'dashboard') renderDashboard();
   if (page === 'history') renderHistory();
   if (page === 'weight') renderBWHistory();
@@ -666,7 +806,8 @@ function hitRepRange(exercise, setsData) {
 
 async function renderLiftForm() {
   await loadWeights();
-  const session = document.getElementById('lift-session').value;
+  const session = document.getElementById('lift-session')?.value;
+  if (!session) return;
   const exNames = PROGRAMMES[session] || [];
   document.getElementById('lift-exercises').innerHTML = exNames.map((name, ei) => {
     const cfg = EX_CONFIG[name] || {};
@@ -686,13 +827,14 @@ async function renderLiftForm() {
       ${Array.from({length: cfg.sets}, (_,s) => `
         <div class="set-row">
           <span class="set-num">${s+1}</span>
-          <input type="number" step="0.5" placeholder="${isBW ? '—' : (w.kg || 'kg')}" id="e${ei}s${s}kg" ${isBW ? 'disabled style="opacity:0.3"' : ''}>
-          <input type="number" placeholder="reps" id="e${ei}s${s}reps">
-          <input type="text" placeholder="optional" id="e${ei}s${s}note">
+          <input type="number" step="0.5" placeholder="${isBW ? '—' : (w.kg || 'kg')}" id="e${ei}s${s}kg" ${isBW ? 'disabled style="opacity:0.3"' : ''} oninput="saveLiftDraft()">
+          <input type="number" placeholder="reps" id="e${ei}s${s}reps" oninput="saveLiftDraft()">
+          <input type="text" placeholder="optional" id="e${ei}s${s}note" oninput="saveLiftDraft()">
         </div>`).join('')}
     </div>`;
   }).join('');
   document.getElementById('overload-alerts').innerHTML = '';
+  restoreLiftDraft();
 }
 
 async function saveLift() {
@@ -710,6 +852,7 @@ async function saveLift() {
   });
   const { error } = await sb.from('lifts').insert({ date, session, exercises, feel, user_id: CURRENT_USER });
   if (error) { toast('Error saving lift', true); return; }
+  clearLiftDraft();
   const alerts = [];
   for (const ex of exercises) {
     const cfg = EX_CONFIG[ex.name];
@@ -1080,6 +1223,7 @@ async function init() {
   const note = document.getElementById('lift-5am-note');
   if (hr < 7) note.style.display = 'block';
   if (CURRENT_USER) document.querySelector('.sidebar-logo').innerHTML = `BJJ/BULK<span>@${CURRENT_USER}</span>`;
+  if (isMobile()) document.getElementById('bottom-nav').style.display = 'flex';
   await loadWeights();
   await loadUserProgramme();
   await renderLiftForm();
